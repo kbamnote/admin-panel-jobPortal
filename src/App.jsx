@@ -1,20 +1,25 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/common/Login';
-import Dashboard from './components/pages/Dashboard';
+import Login from './components/pages/auth/Login';
+import Dashboard from './components/pages/dashboard/Dashboard';
+import Jobs from './components/pages/jobs/Jobs';
+import JobDetails from './components/pages/jobs/JobDetails';
+import Applicants from './components/pages/applicants/Applicants';
+import Team from './components/pages/team/Team';
+import Layout from './components/common/Layout';
 import './App.css';
+import Cookies from 'js-cookie';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  const token = Cookies.get('token');
+  return token ? children : <Navigate to="/login" replace />;
 };
 
 // Public Route Component (redirect to dashboard if already logged in)
 const PublicRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+  const token = Cookies.get('token');
+  return token ? <Navigate to="/dashboard" replace /> : children;
 };
 
 function App() {
@@ -35,18 +40,64 @@ function App() {
             } 
           />
           
-          {/* Protected Dashboard route */}
+          {/* Protected routes with layout */}
           <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Layout>
+                  <Dashboard />
+                </Layout>
               </ProtectedRoute>
             } 
           />
           
-          {/* Catch all route - redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route 
+            path="/jobs" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Jobs />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/jobs/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <JobDetails />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/applicants" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Applicants />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/team" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Team />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Catch all route - redirect to dashboard */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </div>
     </Router>
