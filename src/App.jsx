@@ -4,8 +4,12 @@ import Login from './components/pages/auth/Login';
 import Dashboard from './components/pages/dashboard/Dashboard';
 import Jobs from './components/pages/jobs/Jobs';
 import JobDetails from './components/pages/jobs/JobDetails';
+import JobApplicants from './components/pages/jobs/JobApplicants';
+import PostJob from './components/pages/jobs/PostJob';
 import Applicants from './components/pages/applicants/Applicants';
+import AllRoleDetails from './components/pages/applicants/AllRoleDetails';
 import Team from './components/pages/team/Team';
+import TeamPostedJobs from './components/pages/team/TeamPostedJobs';
 import Layout from './components/common/Layout';
 import './App.css';
 import Cookies from 'js-cookie';
@@ -53,11 +57,22 @@ function App() {
           />
           
           <Route 
-            path="/jobs" 
+            path="/jobs/post" 
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Jobs />
+                  <PostJob />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/jobs/:id/applicants" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <JobApplicants />
                 </Layout>
               </ProtectedRoute>
             } 
@@ -75,11 +90,44 @@ function App() {
           />
           
           <Route 
+            path="/jobs" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Jobs />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
             path="/applicants" 
             element={
               <ProtectedRoute>
                 <Layout>
                   <Applicants />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/all-role-details" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AllRoleDetails />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/team/posted-jobs" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <TeamPostedJobs />
                 </Layout>
               </ProtectedRoute>
             } 

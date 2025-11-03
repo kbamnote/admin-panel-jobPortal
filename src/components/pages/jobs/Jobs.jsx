@@ -1,21 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { allJobs } from '../../utils/Api';
-import { MapPin, Building, Clock, DollarSign, Calendar } from 'lucide-react';
+import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails } from '../../utils/Api';
+import SuccessModal from '../../common/modal/SuccessModal';
+import ErrorModal from '../../common/modal/ErrorModal';
+import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
+import { MapPin, Building, Clock, DollarSign, Calendar, Trash2, Eye, Image as ImageIcon } from 'lucide-react';
 
 const Jobs = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [filterType, setFilterType] = useState('all'); // 'all', 'admin', 'teamMember'
+  const [selectedTeamMember, setSelectedTeamMember] = useState('');
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        const response = await getTeamDetails();
+        if (response.data.success) {
+          setTeamMembers(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching team members:', err);
+      }
+    };
+
+    fetchTeamMembers();
+  }, []);
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        const response = await allJobs();
-        if (response.data.success) {
-          setJobs(response.data.data.jobs);
+        let response;
+        
+        switch (filterType) {
+          case 'admin':
+            response = await adminPostedJobs();
+            break;
+          case 'teamMember':
+            if (selectedTeamMember) {
+              response = await jobsByTeamMember(selectedTeamMember);
+            } else {
+              response = await allJobs();
+            }
+            break;
+          default: // 'all'
+            response = await allJobs();
+        }
+        
+        if (response && response.data.success) {
+          setJobs(response.data.data.jobs || response.data.data);
         } else {
           setError('Failed to fetch jobs');
         }
@@ -27,10 +71,40 @@ const Jobs = () => {
     };
 
     fetchJobs();
-  }, []);
+  }, [filterType, selectedTeamMember]);
 
   const handleViewDetails = (jobId) => {
     navigate(`/jobs/${jobId}`);
+  };
+
+  const handleDeleteClick = (job) => {
+    setJobToDelete(job);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteJob = async () => {
+    if (!jobToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      const response = await deleteJob(jobToDelete._id);
+      if (response.data.success) {
+        // Remove the deleted job from the list
+        setJobs(jobs.filter(job => job._id !== jobToDelete._id));
+        setIsDeleteModalOpen(false);
+        setJobToDelete(null);
+        setSuccessMessage('Job deleted successfully!');
+        setIsSuccessModalOpen(true);
+      } else {
+        setErrorMessage('Failed to delete job: ' + response.data.message);
+        setIsErrorModalOpen(true);
+      }
+    } catch (err) {
+      setErrorMessage('Error deleting job: ' + (err.response?.data?.message || err.message));
+      setIsErrorModalOpen(true);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -41,21 +115,55 @@ const Jobs = () => {
     });
   };
 
+  const handleFilterChange = (e) => {
+    setFilterType(e.target.value);
+    if (e.target.value !== 'teamMember') {
+      setSelectedTeamMember('');
+    }
+  };
+
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">All Posted Jobs</h2>
+      <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+          <div className="flex space-x-2">
+            <select 
+              value={filterType}
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+            >
+              <option value="all">All Posted Jobs</option>
+              <option value="admin">Admin Posted Jobs</option>
+              <option value="teamMember">Team Member Jobs</option>
+            </select>
+            {filterType === 'teamMember' && (
+              <select 
+                value={selectedTeamMember}
+                onChange={(e) => setSelectedTeamMember(e.target.value)}
+                className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              >
+                <option value="">Select Team Member</option>
+                {teamMembers.map(member => (
+                  <option key={member._id} value={member._id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
         <div className="space-y-6">
           {[1, 2, 3].map((item) => (
-            <div key={item} className="border border-gray-200 rounded-xl p-6 bg-gradient-to-br from-white to-gray-50 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div key={item} className="border border-[var(--color-border)] rounded-xl p-6 bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-shadow duration-300">
               <div className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/3 mb-3"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+                <div className="h-6 bg-[var(--color-border)] rounded w-1/3 mb-3"></div>
+                <div className="h-4 bg-[var(--color-border)] rounded w-1/4 mb-4"></div>
+                <div className="h-4 bg-[var(--color-border)] rounded w-2/3 mb-2"></div>
+                <div className="h-4 bg-[var(--color-border)] rounded w-1/2 mb-6"></div>
                 <div className="flex justify-between items-center">
-                  <div className="h-8 bg-gray-200 rounded w-24"></div>
-                  <div className="h-6 bg-gray-200 rounded w-16"></div>
+                  <div className="h-8 bg-[var(--color-border)] rounded w-24"></div>
+                  <div className="h-6 bg-[var(--color-border)] rounded w-16"></div>
                 </div>
               </div>
             </div>
@@ -67,9 +175,36 @@ const Jobs = () => {
 
   if (error) {
     return (
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">All Posted Jobs</h2>
-        <div className="text-red-500 text-center py-12 bg-red-50 rounded-lg">
+      <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+          <div className="flex space-x-2">
+            <select 
+              value={filterType}
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+            >
+              <option value="all">All Posted Jobs</option>
+              <option value="admin">Admin Posted Jobs</option>
+              <option value="teamMember">Team Member Jobs</option>
+            </select>
+            {filterType === 'teamMember' && (
+              <select 
+                value={selectedTeamMember}
+                onChange={(e) => setSelectedTeamMember(e.target.value)}
+                className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              >
+                <option value="">Select Team Member</option>
+                {teamMembers.map(member => (
+                  <option key={member._id} value={member._id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+        <div className="text-[var(--color-error)] text-center py-12 bg-[var(--color-accent-light)] rounded-lg">
           <div className="text-xl font-semibold mb-2">Error Loading Jobs</div>
           <p>{error}</p>
         </div>
@@ -77,54 +212,109 @@ const Jobs = () => {
     );
   }
 
+  const getFilterTitle = () => {
+    switch (filterType) {
+      case 'admin':
+        return 'Admin Posted Jobs';
+      case 'teamMember':
+        if (selectedTeamMember) {
+          const member = teamMembers.find(m => m._id === selectedTeamMember);
+          return member ? `${member.name}'s Posted Jobs` : 'Team Member Jobs';
+        }
+        return 'Team Member Jobs';
+      default:
+        return 'All Posted Jobs';
+    }
+  };
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">All Posted Jobs</h2>
-        <div className="text-sm text-gray-500">
+    <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+        <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{getFilterTitle()}</h2>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <select 
+            value={filterType}
+            onChange={handleFilterChange}
+            className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          >
+            <option value="all">All Posted Jobs</option>
+            <option value="admin">Admin Posted Jobs</option>
+            <option value="teamMember">Team Member Jobs</option>
+          </select>
+          {filterType === 'teamMember' && (
+            <select 
+              value={selectedTeamMember}
+              onChange={(e) => setSelectedTeamMember(e.target.value)}
+              className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+            >
+              <option value="">Select Team Member</option>
+              {teamMembers.map(member => (
+                <option key={member._id} value={member._id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <div className="text-sm text-[var(--color-text-muted)]">
           {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'} found
         </div>
       </div>
       
       {jobs.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-xl">
-          <div className="text-gray-400 text-5xl mb-4">📋</div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No jobs found</h3>
-          <p className="text-gray-500">There are currently no job postings available.</p>
+        <div className="text-center py-16 bg-[var(--color-background-light)] rounded-xl">
+          <div className="text-[var(--color-text-light)] text-5xl mb-4">📋</div>
+          <h3 className="text-xl font-semibold text-[var(--color-text-secondary)] mb-2">No jobs found</h3>
+          <p className="text-[var(--color-text-muted)]">
+            {filterType === 'admin' 
+              ? 'There are currently no jobs posted by admin.' 
+              : filterType === 'teamMember' 
+                ? (selectedTeamMember ? 'This team member has not posted any jobs yet.' : 'Please select a team member to view their jobs.')
+                : 'There are currently no job postings available.'}
+          </p>
         </div>
       ) : (
         <div className="space-y-6">
           {jobs.map((job) => (
             <div 
               key={job._id} 
-              className="border border-gray-200 rounded-xl p-6 bg-gradient-to-br from-white to-gray-50 shadow-sm hover:shadow-md transition-all duration-300 hover:border-indigo-300"
+              className="border border-[var(--color-border)] rounded-xl p-6 bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-all duration-300 hover:border-[var(--color-primary)]"
             >
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                    <h3 className="text-xl font-bold text-gray-900 hover:text-indigo-600 cursor-pointer transition-colors">
+                    <h3 className="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] cursor-pointer transition-colors">
                       {job.title}
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      job.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {job.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                   
                   </div>
                   
-                  <div className="flex items-center text-gray-600 mb-4">
-                    <Building className="h-4 w-4 mr-2" />
-                    <span className="font-medium text-indigo-600">{job.company?.name}</span>
+                  <div className="flex items-start mb-4">
+                    {job.company?.logo ? (
+                      <img 
+                        src={job.company.logo} 
+                        alt={job.company.name} 
+                        className="w-12 h-12 object-contain rounded-md mr-3 border border-[var(--color-border)]"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-md mr-3 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
+                        <Building className="h-6 w-6 text-[var(--color-text-muted)]" />
+                      </div>
+                    )}
+                    <div>
+                      <div className="font-medium text-[var(--color-primary)]">{job.company?.name}</div>
+                      <div className="text-sm text-[var(--color-text-muted)] mt-1 line-clamp-2">
+                        {job.company?.description || 'No company description provided'}
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="flex flex-wrap gap-3 mb-4">
-                    <div className="flex items-center text-gray-500">
+                    <div className="flex items-center text-[var(--color-text-muted)]">
                       <MapPin className="h-4 w-4 mr-1" />
                       <span className="text-sm">{job.location?.[0] || 'Location not specified'}</span>
                     </div>
-                    <div className="flex items-center text-gray-500">
+                    <div className="flex items-center text-[var(--color-text-muted)]">
                       <DollarSign className="h-4 w-4 mr-1" />
                       <span className="text-sm">
                         {job.salary?.min ? 
@@ -132,17 +322,13 @@ const Jobs = () => {
                           'Not disclosed'}
                       </span>
                     </div>
-                    <div className="flex items-center text-gray-500">
+                    <div className="flex items-center text-[var(--color-text-muted)]">
                       <Clock className="h-4 w-4 mr-1" />
                       <span className="text-sm">{job.jobType}</span>
                     </div>
                   </div>
                   
-                  <p className="text-gray-600 mb-4 line-clamp-2">
-                    {job.description}
-                  </p>
-                  
-                  <div className="flex items-center text-gray-500 text-sm">
+                  <div className="flex items-center text-[var(--color-text-muted)] text-sm">
                     <Calendar className="h-4 w-4 mr-1" />
                     <span>Posted on {formatDate(job.createdAt)}</span>
                   </div>
@@ -151,9 +337,17 @@ const Jobs = () => {
                 <div className="flex flex-col sm:flex-row md:flex-col md:items-end gap-3">
                   <button
                     onClick={() => handleViewDetails(job._id)}
-                    className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    className="flex items-center px-4 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                   >
+                    <Eye className="h-4 w-4 mr-2" />
                     View Details
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(job)}
+                    className="flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[#dc2626] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-error)] focus:ring-offset-2"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
                   </button>
                 </div>
               </div>
@@ -161,6 +355,35 @@ const Jobs = () => {
           ))}
         </div>
       )}
+
+      {/* Success Modal */}
+      <SuccessModal 
+        isOpen={isSuccessModalOpen} 
+        onClose={() => setIsSuccessModalOpen(false)} 
+        title="Success" 
+        message={successMessage} 
+      />
+
+      {/* Error Modal */}
+      <ErrorModal 
+        isOpen={isErrorModalOpen} 
+        onClose={() => setIsErrorModalOpen(false)} 
+        title="Error" 
+        message={errorMessage} 
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal 
+        isOpen={isDeleteModalOpen} 
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setJobToDelete(null);
+        }} 
+        onConfirm={handleDeleteJob} 
+        title="Confirm Deletion" 
+        message={`Are you sure you want to delete the job "${jobToDelete?.title}"? This action cannot be undone.`} 
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

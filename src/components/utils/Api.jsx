@@ -46,7 +46,32 @@ export const login = (post) => {
 // ============== All Jobs GET ==============
 export const allJobs = () => Api.get("/jobs");
 export const jobsById = (id) => Api.get(`/jobs/${id}`);
+export const jobsByTeamMember = (teamMemberId) => Api.get(`/admin/jobs?postedBy=${teamMemberId}`);
+export const adminPostedJobs = () => Api.get("/admin/jobs?postedByAdmin=true");
 
 // ============== Job Management ==============
+export const createJob = (jobData) => Api.post("/jobs", jobData);
 export const updateJob = (id, jobData) => Api.put(`/jobs/${id}`, jobData);
 export const deleteJob = (id) => Api.delete(`/jobs/${id}`);
+
+// ============== Job Applications ==============
+export const getJobApplications = (jobId) => Api.get(`/jobs/${jobId}/applications`);
+export const getAllApplicants = () => Api.get('/admin/applicants');
+
+// ============== Uploading companyLogo ==============
+export const uploadFileHoster = (formData) =>
+  Api.post("/auth/profile/upload-multiple", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+// ============== Updating Company logo ==============
+export const updateCompanyLogo = (formData) =>
+  Api.put("/auth/profile/company-logo", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+// ============== Team Management ==============
+export const createTeam = (formData) => Api.post("/elite-team", formData);
+export const updateTeam = (id, formData) => Api.put(`/elite-team/${id}`, formData);
+export const deleteTeam = (id) => Api.delete(`/elite-team/${id}`);
+export const getTeamDetails = () => Api.get("/elite-team");

@@ -33,8 +33,16 @@
 
 .card {
   padding: 2em;
+  background-color: var(--color-white);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--color-text-muted);
 }

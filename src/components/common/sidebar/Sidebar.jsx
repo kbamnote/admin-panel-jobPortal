@@ -1,18 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, UserCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, UserCircle, LogOut, ChevronDown, Plus } from 'lucide-react';
 import Cookies from 'js-cookie';
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const userRole = Cookies.get('userRole') || 'admin';
+  const [isJobsDropdownOpen, setIsJobsDropdownOpen] = useState(false);
+  const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Jobs', href: '/jobs', icon: Briefcase },
+    { name: 'Jobs', href: '/jobs', icon: Briefcase, hasDropdown: true },
     { name: 'Applicants', href: '/applicants', icon: Users },
-    { name: 'Team', href: '/team', icon: UserCircle },
+    { name: 'All Role Details', href: '/all-role-details', icon: UserCircle },
+    { name: 'Team', href: '/team', icon: UserCircle, hasDropdown: true },
   ];
 
   const isActive = (path) => {
@@ -28,11 +31,11 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-indigo-700 to-indigo-800 text-white shadow-lg z-10">
+    <div className="fixed inset-y-0 left-0 w-64 bg-[var(--color-primary)] text-[var(--color-text-white)] shadow-lg z-10">
       <div className="flex flex-col h-full">
         {/* Sidebar header */}
-        <div className="flex items-center justify-center h-16 border-b border-indigo-600">
-          <h1 className="text-xl font-bold text-white">Job Admin Panel</h1>
+        <div className="flex items-center justify-center h-16 border-b border-[var(--color-dark-secondary)]">
+          <h1 className="text-xl font-bold text-white text-[var(--color-text-white)]">Job Admin Panel</h1>
         </div>
 
         {/* Navigation */}
@@ -40,14 +43,111 @@ const Sidebar = () => {
           <ul className="space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
+              
+              if (item.name === 'Jobs' && item.hasDropdown) {
+                return (
+                  <li key={item.name}>
+                    <div
+                      className={`flex items-center justify-between px-4 py-3 text-base font-medium rounded-lg transition-all duration-200 cursor-pointer ${
+                        isActive(item.href)
+                          ? 'bg-[var(--color-accent)] text-[var(--color-text-white)] shadow-md'
+                          : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
+                      }`}
+                      onClick={() => setIsJobsDropdownOpen(!isJobsDropdownOpen)}
+                    >
+                      <div className="flex items-center">
+                        <Icon className="mr-3 h-5 w-5" />
+                        {item.name}
+                      </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isJobsDropdownOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                    
+                    {isJobsDropdownOpen && (
+                      <div className="ml-8 mt-2 space-y-2">
+                        <Link
+                          to="/jobs"
+                          className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                            isActive('/jobs')
+                              ? 'bg-[var(--color-accent)] text-[var(--color-text-white)]'
+                              : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
+                          }`}
+                        >
+                          <Briefcase className="mr-2 h-4 w-4" />
+                          All Jobs
+                        </Link>
+                        <Link
+                          to="/jobs/post"
+                          className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                            isActive('/jobs/post')
+                              ? 'bg-[var(--color-accent)] text-[var(--color-text-white)]'
+                              : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
+                          }`}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Post Job
+                        </Link>
+                      </div>
+                    )}
+                  </li>
+                );
+              }
+              
+              if (item.name === 'Team' && item.hasDropdown) {
+                return (
+                  <li key={item.name}>
+                    <div
+                      className={`flex items-center justify-between px-4 py-3 text-base font-medium rounded-lg transition-all duration-200 cursor-pointer ${
+                        isActive(item.href)
+                          ? 'bg-[var(--color-accent)] text-[var(--color-text-white)] shadow-md'
+                          : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
+                      }`}
+                      onClick={() => setIsTeamDropdownOpen(!isTeamDropdownOpen)}
+                    >
+                      <div className="flex items-center">
+                        <Icon className="mr-3 h-5 w-5" />
+                        {item.name}
+                      </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isTeamDropdownOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                    
+                    {isTeamDropdownOpen && (
+                      <div className="ml-8 mt-2 space-y-2">
+                        <Link
+                          to="/team"
+                          className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                            isActive('/team')
+                              ? 'bg-[var(--color-accent)] text-[var(--color-text-white)]'
+                              : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
+                          }`}
+                        >
+                          <UserCircle className="mr-2 h-4 w-4" />
+                          Manage Team
+                        </Link>
+                        <Link
+                          to="/team/posted-jobs"
+                          className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                            isActive('/team/posted-jobs')
+                              ? 'bg-[var(--color-accent)] text-[var(--color-text-white)]'
+                              : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
+                          }`}
+                        >
+                          <Briefcase className="mr-2 h-4 w-4" />
+                          Team Posted Jobs
+                        </Link>
+                      </div>
+                    )}
+                  </li>
+                );
+              }
+              
               return (
                 <li key={item.name}>
                   <Link
                     to={item.href}
                     className={`flex items-center px-4 py-3 text-base font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.href)
-                        ? 'bg-white text-indigo-700 shadow-md'
-                        : 'text-indigo-100 hover:bg-indigo-600 hover:text-white'
+                        ? 'bg-[var(--color-accent)] text-[var(--color-text-white)] shadow-md'
+                        : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
                     }`}
                   >
                     <Icon className="mr-3 h-5 w-5" />
@@ -60,25 +160,24 @@ const Sidebar = () => {
         </nav>
 
         {/* User role and logout - Enhanced design */}
-        <div className="px-4 py-6 border-t border-indigo-600">
-          <div className="bg-indigo-600 rounded-xl p-4 shadow-lg">
+        <div className="px-4 py-6 border-t border-[var(--color-dark-secondary)]">
+          <div className="bg-[var(--color-dark-secondary)] rounded-xl p-4 shadow-lg">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
-                <div className="bg-indigo-500 rounded-xl w-10 h-10 flex items-center justify-center">
-                  <UserCircle className="text-white h-6 w-6" />
+                <div className="bg-[var(--color-primary)] rounded-xl w-10 h-10 flex items-center justify-center">
+                  <UserCircle className="text-[var(--color-text-white)] h-6 w-6" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-semibold text-white">Current Role</p>
-                  <p className="text-xs text-indigo-200 capitalize">{userRole}</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-white)] capitalize">{userRole}</p>
                 </div>
               </div>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-indigo-800">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--color-accent)] text-[var(--color-text-white)]">
                 Active
               </span>
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-900 hover:bg-indigo-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+              className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-[var(--color-text-white)] bg-[var(--color-accent)] hover:bg-[#d63851] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-accent)] transition-colors duration-200"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Logout
