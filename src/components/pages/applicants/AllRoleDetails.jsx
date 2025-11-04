@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { getAllApplicants } from '../../utils/Api';
-import { User, Mail, Calendar, Briefcase, Building, FileText } from 'lucide-react';
+import { getAllApplicants, deleteAccount } from '../../utils/Api';
+import { User, Mail, Calendar, Briefcase, Building, FileText, Trash2 } from 'lucide-react';
+import SuccessModal from '../../common/modal/SuccessModal';
+import ErrorModal from '../../common/modal/ErrorModal';
+import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
 
 const AllRoleDetails = () => {
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchAllApplicants = async () => {
@@ -67,6 +77,36 @@ const AllRoleDetails = () => {
     );
   };
 
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      const response = await deleteAccount(userToDelete.user._id);
+      if (response.data.success) {
+        // Remove the deleted user from the list
+        setApplicants(applicants.filter(applicant => applicant.user._id !== userToDelete.user._id));
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
+        setSuccessMessage('User deleted successfully!');
+        setIsSuccessModalOpen(true);
+      } else {
+        setErrorMessage('Failed to delete user: ' + response.data.message);
+        setIsErrorModalOpen(true);
+      }
+    } catch (err) {
+      setErrorMessage('Error deleting user: ' + (err.response?.data?.message || err.message));
+      setIsErrorModalOpen(true);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
@@ -109,7 +149,8 @@ const AllRoleDetails = () => {
   if (selectedUser) {
     const user = selectedUser.user;
     const profile = user.profile || {};
-    const applications = selectedUser.applications || [];
+    const applications = user.role === 'jobSeeker' ? selectedUser.applications || [] : [];
+    const postedJobs = user.role !== 'jobSeeker' ? selectedUser.postedJobs || [] : [];
     
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
@@ -122,6 +163,13 @@ const AllRoleDetails = () => {
             <span className="ml-1">Back to All Users</span>
           </button>
           <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">User Details</h1>
+          <button
+            onClick={() => handleDeleteClick(selectedUser)}
+            className="ml-auto flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] rounded-lg hover:bg-[#dc2626] transition-colors"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete User
+          </button>
         </div>
         
         <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-dark-secondary)] rounded-xl p-6 mb-8 text-white">
@@ -283,63 +331,123 @@ const AllRoleDetails = () => {
               </div>
             </div>
             
-            {/* Applications */}
-            <div className="bg-[var(--color-background-light)] rounded-xl p-6">
-              <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Applications ({applications.length})</h3>
-              {applications.length > 0 ? (
-                <div className="space-y-4">
-                  {applications.map((application) => (
-                    <div key={application._id} className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)]">
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="font-bold text-[var(--color-text-primary)]">{application.jobId?.title || 'Unknown Job'}</h4>
-                        {getApplicationStatusBadge(application.status)}
-                      </div>
-                      <div className="flex flex-wrap gap-4 text-sm text-[var(--color-text-secondary)] mb-3">
-                        <div className="flex items-center">
-                          <Building className="h-4 w-4 mr-1" />
-                          <span>{application.jobId?.company?.name || 'Unknown Company'}</span>
+            {/* Applications (only for jobSeeker) */}
+            {user.role === 'jobSeeker' && (
+              <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+                <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Applications ({applications.length})</h3>
+                {applications.length > 0 ? (
+                  <div className="space-y-4">
+                    {applications.map((application) => (
+                      <div key={application._id} className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)]">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-bold text-[var(--color-text-primary)]">{application.jobId?.title || 'Unknown Job'}</h4>
+                          {getApplicationStatusBadge(application.status)}
                         </div>
-                        <div className="flex items-center">
-                          <Briefcase className="h-4 w-4 mr-1" />
-                          <span>{application.jobId?.jobType || 'Not specified'}</span>
+                        <div className="flex flex-wrap gap-4 text-sm text-[var(--color-text-secondary)] mb-3">
+                          <div className="flex items-center">
+                            <Building className="h-4 w-4 mr-1" />
+                            <span>{application.jobId?.company?.name || 'Unknown Company'}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Briefcase className="h-4 w-4 mr-1" />
+                            <span>{application.jobId?.jobType || 'Not specified'}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            <span>Applied: {formatDate(application.appliedAt)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          <span>Applied: {formatDate(application.appliedAt)}</span>
+                        <div className="flex flex-wrap gap-2">
+                          {application.jobId?.skills?.slice(0, 3).map((skill, index) => (
+                            <span key={index} className="bg-[var(--color-accent-light)] px-2 py-1 rounded-full text-xs">
+                              {skill}
+                            </span>
+                          ))}
+                          {application.jobId?.skills && application.jobId.skills.length > 3 && (
+                            <span className="bg-[var(--color-accent-light)] px-2 py-1 rounded-full text-xs">
+                              +{application.jobId.skills.length - 3} more
+                            </span>
+                          )}
                         </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {application.jobId?.skills?.slice(0, 3).map((skill, index) => (
-                          <span key={index} className="bg-[var(--color-accent-light)] px-2 py-1 rounded-full text-xs">
-                            {skill}
-                          </span>
-                        ))}
-                        {application.jobId?.skills && application.jobId.skills.length > 3 && (
-                          <span className="bg-[var(--color-accent-light)] px-2 py-1 rounded-full text-xs">
-                            +{application.jobId.skills.length - 3} more
-                          </span>
+                        {application.resume && (
+                          <div className="mt-3">
+                            <a 
+                              href={application.resume} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors text-sm"
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              View Resume
+                            </a>
+                          </div>
                         )}
                       </div>
-                      {application.resume && (
-                        <div className="mt-3">
-                          <a 
-                            href={application.resume} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors text-sm"
-                          >
-                            <FileText className="h-4 w-4 mr-1" />
-                            View Resume
-                          </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[var(--color-text-muted)]">No applications found for this user.</p>
+                )}
+              </div>
+            )}
+            
+            {/* Posted Jobs (for non-jobSeeker roles) */}
+            {user.role !== 'jobSeeker' && (
+              <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+                <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Posted Jobs ({postedJobs.length})</h3>
+                {postedJobs.length > 0 ? (
+                  <div className="space-y-4">
+                    {postedJobs.map((job) => (
+                      <div key={job._id} className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)]">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-bold text-[var(--color-text-primary)]">{job.title || 'Unknown Job'}</h4>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            job.isActive 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {job.isActive ? 'Active' : 'Inactive'}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-[var(--color-text-muted)]">No applications found for this user.</p>
-              )}
-            </div>
+                        <div className="flex flex-wrap gap-4 text-sm text-[var(--color-text-secondary)] mb-3">
+                          <div className="flex items-center">
+                            <Building className="h-4 w-4 mr-1" />
+                            <span>{job.company?.name || 'Unknown Company'}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Briefcase className="h-4 w-4 mr-1" />
+                            <span>{job.jobType || 'Not specified'}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            <span>Posted: {formatDate(job.createdAt)}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {job.skills?.slice(0, 3).map((skill, index) => (
+                            <span key={index} className="bg-[var(--color-accent-light)] px-2 py-1 rounded-full text-xs">
+                              {skill}
+                            </span>
+                          ))}
+                          {job.skills && job.skills.length > 3 && (
+                            <span className="bg-[var(--color-accent-light)] px-2 py-1 rounded-full text-xs">
+                              +{job.skills.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-3">
+                          <span className="text-sm text-[var(--color-text-secondary)]">
+                            {job.location?.join(', ') || 'No location specified'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[var(--color-text-muted)]">No posted jobs found for this user.</p>
+                )}
+              </div>
+            )}
           </div>
           
           <div>
@@ -457,9 +565,19 @@ const AllRoleDetails = () => {
             return (
               <div 
                 key={user._id} 
-                className="border border-[var(--color-border)] rounded-xl p-5 hover:shadow-lg transition-all cursor-pointer bg-[var(--color-background-light)] hover:bg-[var(--color-white)]"
+                className="border border-[var(--color-border)] rounded-xl p-5 hover:shadow-lg transition-all cursor-pointer bg-[var(--color-background-light)] hover:bg-[var(--color-white)] relative"
                 onClick={() => setSelectedUser(applicant)}
               >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(applicant);
+                  }}
+                  className="absolute top-3 right-3 p-1.5 bg-[var(--color-error)] text-[var(--color-text-white)] rounded-full hover:bg-[#dc2626] transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                
                 <div className="flex items-center mb-4">
                   {profile.photo ? (
                     <img 
@@ -489,7 +607,9 @@ const AllRoleDetails = () => {
                 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-[var(--color-text-muted)]">
-                    {applicant.applications?.length || 0} applications
+                    {user.role === 'jobSeeker' 
+                      ? `${applicant.applications?.length || 0} applications` 
+                      : `${applicant.postedJobs?.length || 0} posted jobs`}
                   </span>
                   {profile.companyName && (
                     <span className="text-xs text-[var(--color-text-secondary)] truncate max-w-[100px]">
@@ -502,6 +622,35 @@ const AllRoleDetails = () => {
           })}
         </div>
       )}
+
+      {/* Success Modal */}
+      <SuccessModal 
+        isOpen={isSuccessModalOpen} 
+        onClose={() => setIsSuccessModalOpen(false)} 
+        title="Success" 
+        message={successMessage} 
+      />
+
+      {/* Error Modal */}
+      <ErrorModal 
+        isOpen={isErrorModalOpen} 
+        onClose={() => setIsErrorModalOpen(false)} 
+        title="Error" 
+        message={errorMessage} 
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal 
+        isOpen={isDeleteModalOpen} 
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setUserToDelete(null);
+        }} 
+        onConfirm={handleDeleteUser} 
+        title="Confirm Deletion" 
+        message={`Are you sure you want to delete user "${userToDelete?.user?.name}"? This action cannot be undone.`} 
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

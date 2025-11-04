@@ -7,6 +7,7 @@ import JobDetails from './components/pages/jobs/JobDetails';
 import JobApplicants from './components/pages/jobs/JobApplicants';
 import PostJob from './components/pages/jobs/PostJob';
 import Applicants from './components/pages/applicants/Applicants';
+import ApplicantsDetails from './components/pages/applicants/ApplicantsDetails';
 import AllRoleDetails from './components/pages/applicants/AllRoleDetails';
 import Team from './components/pages/team/Team';
 import TeamPostedJobs from './components/pages/team/TeamPostedJobs';
@@ -95,6 +96,17 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Jobs />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/applicants/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ApplicantsDetails />
                 </Layout>
               </ProtectedRoute>
             } 

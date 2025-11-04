@@ -70,8 +70,15 @@ export const updateCompanyLogo = (formData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
+// ============== All Jobs GET ==============
+export const allApplicants = () => Api.get("/admin/jobseekers");
+export const applicantsById = (id) => Api.get(`/admin/jobseekers/${id}`);
+
 // ============== Team Management ==============
 export const createTeam = (formData) => Api.post("/elite-team", formData);
 export const updateTeam = (id, formData) => Api.put(`/elite-team/${id}`, formData);
 export const deleteTeam = (id) => Api.delete(`/elite-team/${id}`);
 export const getTeamDetails = () => Api.get("/elite-team");
+
+// ============== Delete Account ============== 
+export const deleteAccount = (id) => Api.delete(`/admin/users/${id}`);

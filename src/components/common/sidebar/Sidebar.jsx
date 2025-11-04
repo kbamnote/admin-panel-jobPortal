@@ -10,12 +10,16 @@ const Sidebar = () => {
   const [isJobsDropdownOpen, setIsJobsDropdownOpen] = useState(false);
   const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
 
+  // Filter nav items based on user role
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Jobs', href: '/jobs', icon: Briefcase, hasDropdown: true },
-    { name: 'Applicants', href: '/applicants', icon: Users },
-    { name: 'All Role Details', href: '/all-role-details', icon: UserCircle },
-    { name: 'Team', href: '/team', icon: UserCircle, hasDropdown: true },
+    // Only show these items for admin role
+    ...(userRole === 'admin' ? [
+      { name: 'Applicants', href: '/applicants', icon: Users },
+      { name: 'All Role Details', href: '/all-role-details', icon: UserCircle },
+      { name: 'Team', href: '/team', icon: UserCircle, hasDropdown: true }
+    ] : [])
   ];
 
   const isActive = (path) => {

@@ -5,9 +5,11 @@ import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
 import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
 import { MapPin, Building, Clock, DollarSign, Calendar, Trash2, Eye, Image as ImageIcon } from 'lucide-react';
+import Cookies from 'js-cookie';
 
 const Jobs = () => {
   const navigate = useNavigate();
+  const userRole = Cookies.get('userRole') || 'admin';
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,19 +45,25 @@ const Jobs = () => {
         setLoading(true);
         let response;
         
-        switch (filterType) {
-          case 'admin':
-            response = await adminPostedJobs();
-            break;
-          case 'teamMember':
-            if (selectedTeamMember) {
-              response = await jobsByTeamMember(selectedTeamMember);
-            } else {
+        // For eliteTeam role, only show all jobs (no filtering)
+        if (userRole === 'eliteTeam') {
+          response = await allJobs();
+        } else {
+          // Admin role can use filters
+          switch (filterType) {
+            case 'admin':
+              response = await adminPostedJobs();
+              break;
+            case 'teamMember':
+              if (selectedTeamMember) {
+                response = await jobsByTeamMember(selectedTeamMember);
+              } else {
+                response = await allJobs();
+              }
+              break;
+            default: // 'all'
               response = await allJobs();
-            }
-            break;
-          default: // 'all'
-            response = await allJobs();
+          }
         }
         
         if (response && response.data.success) {
@@ -71,7 +79,7 @@ const Jobs = () => {
     };
 
     fetchJobs();
-  }, [filterType, selectedTeamMember]);
+  }, [filterType, selectedTeamMember, userRole]);
 
   const handleViewDetails = (jobId) => {
     navigate(`/jobs/${jobId}`);
@@ -125,34 +133,43 @@ const Jobs = () => {
   if (loading) {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
-          <div className="flex space-x-2">
-            <select 
-              value={filterType}
-              onChange={handleFilterChange}
-              className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
-            >
-              <option value="all">All Posted Jobs</option>
-              <option value="admin">Admin Posted Jobs</option>
-              <option value="teamMember">Team Member Jobs</option>
-            </select>
-            {filterType === 'teamMember' && (
+        {/* Hide filter dropdown for eliteTeam role */}
+        {userRole === 'admin' && (
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+            <div className="flex space-x-2">
               <select 
-                value={selectedTeamMember}
-                onChange={(e) => setSelectedTeamMember(e.target.value)}
+                value={filterType}
+                onChange={handleFilterChange}
                 className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
               >
-                <option value="">Select Team Member</option>
-                {teamMembers.map(member => (
-                  <option key={member._id} value={member._id}>
-                    {member.name}
-                  </option>
-                ))}
+                <option value="all">All Posted Jobs</option>
+                <option value="admin">Admin Posted Jobs</option>
+                <option value="teamMember">Team Member Jobs</option>
               </select>
-            )}
+              {filterType === 'teamMember' && (
+                <select 
+                  value={selectedTeamMember}
+                  onChange={(e) => setSelectedTeamMember(e.target.value)}
+                  className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                >
+                  <option value="">Select Team Member</option>
+                  {teamMembers.map(member => (
+                    <option key={member._id} value={member._id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+        {/* For eliteTeam role, show simple header */}
+        {userRole === 'eliteTeam' && (
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+          </div>
+        )}
         <div className="space-y-6">
           {[1, 2, 3].map((item) => (
             <div key={item} className="border border-[var(--color-border)] rounded-xl p-6 bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -176,9 +193,78 @@ const Jobs = () => {
   if (error) {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
-          <div className="flex space-x-2">
+        {/* Hide filter dropdown for eliteTeam role */}
+        {userRole === 'admin' && (
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+            <div className="flex space-x-2">
+              <select 
+                value={filterType}
+                onChange={handleFilterChange}
+                className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              >
+                <option value="all">All Posted Jobs</option>
+                <option value="admin">Admin Posted Jobs</option>
+                <option value="teamMember">Team Member Jobs</option>
+              </select>
+              {filterType === 'teamMember' && (
+                <select 
+                  value={selectedTeamMember}
+                  onChange={(e) => setSelectedTeamMember(e.target.value)}
+                  className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                >
+                  <option value="">Select Team Member</option>
+                  {teamMembers.map(member => (
+                    <option key={member._id} value={member._id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+        )}
+        {/* For eliteTeam role, show simple header */}
+        {userRole === 'eliteTeam' && (
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+          </div>
+        )}
+        <div className="text-[var(--color-error)] text-center py-12 bg-[var(--color-accent-light)] rounded-lg">
+          <div className="text-xl font-semibold mb-2">Error Loading Jobs</div>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getFilterTitle = () => {
+    // For eliteTeam role, always show "All Posted Jobs"
+    if (userRole === 'eliteTeam') {
+      return 'All Posted Jobs';
+    }
+    
+    switch (filterType) {
+      case 'admin':
+        return 'Admin Posted Jobs';
+      case 'teamMember':
+        if (selectedTeamMember) {
+          const member = teamMembers.find(m => m._id === selectedTeamMember);
+          return member ? `${member.name}'s Posted Jobs` : 'Team Member Jobs';
+        }
+        return 'Team Member Jobs';
+      default:
+        return 'All Posted Jobs';
+    }
+  };
+
+  return (
+    <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+        <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{getFilterTitle()}</h2>
+        {/* Hide filter dropdown for eliteTeam role */}
+        {userRole === 'admin' && (
+          <div className="flex flex-col sm:flex-row gap-2">
             <select 
               value={filterType}
               onChange={handleFilterChange}
@@ -203,59 +289,7 @@ const Jobs = () => {
               </select>
             )}
           </div>
-        </div>
-        <div className="text-[var(--color-error)] text-center py-12 bg-[var(--color-accent-light)] rounded-lg">
-          <div className="text-xl font-semibold mb-2">Error Loading Jobs</div>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const getFilterTitle = () => {
-    switch (filterType) {
-      case 'admin':
-        return 'Admin Posted Jobs';
-      case 'teamMember':
-        if (selectedTeamMember) {
-          const member = teamMembers.find(m => m._id === selectedTeamMember);
-          return member ? `${member.name}'s Posted Jobs` : 'Team Member Jobs';
-        }
-        return 'Team Member Jobs';
-      default:
-        return 'All Posted Jobs';
-    }
-  };
-
-  return (
-    <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-        <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{getFilterTitle()}</h2>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <select 
-            value={filterType}
-            onChange={handleFilterChange}
-            className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
-          >
-            <option value="all">All Posted Jobs</option>
-            <option value="admin">Admin Posted Jobs</option>
-            <option value="teamMember">Team Member Jobs</option>
-          </select>
-          {filterType === 'teamMember' && (
-            <select 
-              value={selectedTeamMember}
-              onChange={(e) => setSelectedTeamMember(e.target.value)}
-              className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
-            >
-              <option value="">Select Team Member</option>
-              {teamMembers.map(member => (
-                <option key={member._id} value={member._id}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+        )}
         <div className="text-sm text-[var(--color-text-muted)]">
           {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'} found
         </div>
@@ -266,11 +300,15 @@ const Jobs = () => {
           <div className="text-[var(--color-text-light)] text-5xl mb-4">📋</div>
           <h3 className="text-xl font-semibold text-[var(--color-text-secondary)] mb-2">No jobs found</h3>
           <p className="text-[var(--color-text-muted)]">
-            {filterType === 'admin' 
-              ? 'There are currently no jobs posted by admin.' 
-              : filterType === 'teamMember' 
-                ? (selectedTeamMember ? 'This team member has not posted any jobs yet.' : 'Please select a team member to view their jobs.')
-                : 'There are currently no job postings available.'}
+            {userRole === 'admin' ? (
+              filterType === 'admin' 
+                ? 'There are currently no jobs posted by admin.' 
+                : filterType === 'teamMember' 
+                  ? (selectedTeamMember ? 'This team member has not posted any jobs yet.' : 'Please select a team member to view their jobs.')
+                  : 'There are currently no job postings available.'
+            ) : (
+              'There are currently no job postings available.'
+            )}
           </p>
         </div>
       ) : (
@@ -342,13 +380,16 @@ const Jobs = () => {
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </button>
-                  <button
-                    onClick={() => handleDeleteClick(job)}
-                    className="flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[#dc2626] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-error)] focus:ring-offset-2"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </button>
+                  {/* Only show delete button for admin role */}
+                  {userRole === 'admin' && (
+                    <button
+                      onClick={() => handleDeleteClick(job)}
+                      className="flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[#dc2626] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-error)] focus:ring-offset-2"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -372,18 +413,20 @@ const Jobs = () => {
         message={errorMessage} 
       />
 
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal 
-        isOpen={isDeleteModalOpen} 
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setJobToDelete(null);
-        }} 
-        onConfirm={handleDeleteJob} 
-        title="Confirm Deletion" 
-        message={`Are you sure you want to delete the job "${jobToDelete?.title}"? This action cannot be undone.`} 
-        isLoading={isDeleting}
-      />
+      {/* Delete Confirmation Modal - only show for admin */}
+      {userRole === 'admin' && (
+        <DeleteConfirmationModal 
+          isOpen={isDeleteModalOpen} 
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setJobToDelete(null);
+          }} 
+          onConfirm={handleDeleteJob} 
+          title="Confirm Deletion" 
+          message={`Are you sure you want to delete the job "${jobToDelete?.title}"? This action cannot be undone.`} 
+          isLoading={isDeleting}
+        />
+      )}
     </div>
   );
 };

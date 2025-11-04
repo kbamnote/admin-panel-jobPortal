@@ -20,12 +20,18 @@ import {
   Edit,
   Trash2,
   Globe,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Users,
+  GraduationCap,
+  Briefcase,
+  Sun
 } from 'lucide-react';
+import Cookies from 'js-cookie';
 
 const JobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const userRole = Cookies.get('userRole') || 'admin';
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -203,26 +209,33 @@ const JobDetails = () => {
             </div>
           </div>
           <div className="flex space-x-3">
-            <button
-              onClick={() => navigate(`/jobs/${id}/applicants`)}
-              className="flex items-center px-4 py-2 bg-[var(--color-accent)] text-[var(--color-text-white)] rounded-lg transition-colors"
-            >
-              View Applicants
-            </button>
+            {/* Only show View Applicants and Delete Job buttons for admin role */}
+            {userRole === 'admin' && (
+              <>
+                <button
+                  onClick={() => navigate(`/jobs/${id}/applicants`)}
+                  className="flex items-center px-4 py-2 bg-[var(--color-accent)] text-[var(--color-text-white)] rounded-lg transition-colors"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  View Applicants
+                </button>
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  disabled={isDeleting}
+                  className="flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] rounded-lg hover:bg-[#dc2626] transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {isDeleting ? 'Deleting...' : 'Delete Job'}
+                </button>
+              </>
+            )}
+            {/* Show Update Job button for both admin and eliteTeam roles */}
             <button
               onClick={() => setIsUpdateModalOpen(true)}
               className="flex items-center px-4 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors"
             >
               <Edit className="h-4 w-4 mr-2" />
               Update Job
-            </button>
-            <button
-              onClick={() => setIsDeleteModalOpen(true)}
-              disabled={isDeleting}
-              className="flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] rounded-lg hover:bg-[#dc2626] transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {isDeleting ? 'Deleting...' : 'Delete Job'}
             </button>
           </div>
         </div>
@@ -268,6 +281,30 @@ const JobDetails = () => {
               <div className="font-medium">
                 {job.createdAt ? formatDate(job.createdAt) : 'Not specified'}
               </div>
+            </div>
+            <div className="bg-[var(--color-white)] p-3 rounded-lg">
+              <div className="text-xs text-[var(--color-text-muted)] mb-1">Interview Type</div>
+              <div className="font-medium">{job.interviewType || 'Not specified'}</div>
+            </div>
+            <div className="bg-[var(--color-white)] p-3 rounded-lg">
+              <div className="text-xs text-[var(--color-text-muted)] mb-1">Work Type</div>
+              <div className="font-medium">{job.workType || 'Not specified'}</div>
+            </div>
+            <div className="bg-[var(--color-white)] p-3 rounded-lg">
+              <div className="text-xs text-[var(--color-text-muted)] mb-1">Minimum Education</div>
+              <div className="font-medium">{job.minEducation || 'Not specified'}</div>
+            </div>
+            <div className="bg-[var(--color-white)] p-3 rounded-lg">
+              <div className="text-xs text-[var(--color-text-muted)] mb-1">Shift</div>
+              <div className="font-medium">{job.shift || 'Not specified'}</div>
+            </div>
+            <div className="bg-[var(--color-white)] p-3 rounded-lg">
+              <div className="text-xs text-[var(--color-text-muted)] mb-1">Notice Period</div>
+              <div className="font-medium">{job.noticePeriod || 'Not specified'}</div>
+            </div>
+            <div className="bg-[var(--color-white)] p-3 rounded-lg">
+              <div className="text-xs text-[var(--color-text-muted)] mb-1">Year of Passing</div>
+              <div className="font-medium">{job.yearOfPassing || 'Not specified'}</div>
             </div>
           </div>
         </div>
@@ -346,6 +383,102 @@ const JobDetails = () => {
         </div>
       </div>
 
+      {/* Posted By Information */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
+          <User className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
+          Posted By
+        </h2>
+        <div className="bg-[var(--color-background-light)] rounded-xl p-5">
+          <div className="flex items-center mb-4">
+            {job.postedBy?.profile?.photo ? (
+              <img 
+                src={job.postedBy.profile.photo} 
+                alt={job.postedBy.name} 
+                className="w-16 h-16 object-cover rounded-lg mr-4 border border-[var(--color-border)]"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-lg mr-4 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
+                <User className="h-8 w-8 text-[var(--color-text-muted)]" />
+              </div>
+            )}
+            <div>
+              <h3 className="font-bold text-[var(--color-text-primary)] text-xl">{job.postedBy?.name || 'Unknown'}</h3>
+              <p className="text-[var(--color-text-secondary)]">{job.postedBy?.email || 'No email provided'}</p>
+              <span className="inline-block mt-1 px-2 py-1 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-full text-xs font-medium">
+                {job.postedBy?.role || 'Unknown role'}
+              </span>
+            </div>
+          </div>
+          
+          {job.postedBy?.profile && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {job.postedBy.profile.companyName && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">Company Name</div>
+                  <div className="font-medium">{job.postedBy.profile.companyName}</div>
+                </div>
+              )}
+              {job.postedBy.profile.companyDescription && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">Company Description</div>
+                  <div className="font-medium">{job.postedBy.profile.companyDescription}</div>
+                </div>
+              )}
+              {job.postedBy.profile.companyWebsite && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">Company Website</div>
+                  <a 
+                    href={job.postedBy.profile.companyWebsite} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="font-medium text-[var(--color-primary)] hover:underline"
+                  >
+                    {job.postedBy.profile.companyWebsite}
+                  </a>
+                </div>
+              )}
+              {job.postedBy.profile.companyEmail && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">Company Email</div>
+                  <div className="font-medium">{job.postedBy.profile.companyEmail}</div>
+                </div>
+              )}
+              {job.postedBy.profile.numberOfEmployees && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">Number of Employees</div>
+                  <div className="font-medium">{job.postedBy.profile.numberOfEmployees}</div>
+                </div>
+              )}
+              {job.postedBy.profile.companyPhone && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">Company Phone</div>
+                  <div className="font-medium">{job.postedBy.profile.companyPhone}</div>
+                </div>
+              )}
+              {job.postedBy.profile.phone && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">Phone</div>
+                  <div className="font-medium">{job.postedBy.profile.phone}</div>
+                </div>
+              )}
+              {job.postedBy.profile.panCardNumber && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">PAN Card Number</div>
+                  <div className="font-medium">{job.postedBy.profile.panCardNumber}</div>
+                </div>
+              )}
+              {job.postedBy.profile.gstNumber && (
+                <div className="bg-[var(--color-white)] p-3 rounded-lg">
+                  <div className="text-xs text-[var(--color-text-muted)] mb-1">GST Number</div>
+                  <div className="font-medium">{job.postedBy.profile.gstNumber}</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Update Job Modal */}
       <Modal isOpen={isUpdateModalOpen} onClose={() => setIsUpdateModalOpen(false)} title="Update Job Details">
         <JobUpdateFormModal 
@@ -371,15 +504,17 @@ const JobDetails = () => {
         message={errorMessage} 
       />
 
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal 
-        isOpen={isDeleteModalOpen} 
-        onClose={() => setIsDeleteModalOpen(false)} 
-        onConfirm={handleDeleteJob} 
-        title="Confirm Deletion" 
-        message="Are you sure you want to delete this job? This action cannot be undone." 
-        isLoading={isDeleting}
-      />
+      {/* Delete Confirmation Modal - only show for admin */}
+      {userRole === 'admin' && (
+        <DeleteConfirmationModal 
+          isOpen={isDeleteModalOpen} 
+          onClose={() => setIsDeleteModalOpen(false)} 
+          onConfirm={handleDeleteJob} 
+          title="Confirm Deletion" 
+          message="Are you sure you want to delete this job? This action cannot be undone." 
+          isLoading={isDeleting}
+        />
+      )}
     </div>
   );
 };
