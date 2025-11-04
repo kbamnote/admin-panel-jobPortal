@@ -45,6 +45,7 @@ export const login = (post) => {
 
 // ============== All Jobs GET ==============
 export const allJobs = (page = 1, limit = 10) => Api.get(`/jobs?page=${page}&limit=${limit}`);
+export const jobsById = (id) => Api.get(`/jobs/${id}`);
 export const jobsByTeamMember = (teamMemberId, page = 1, limit = 10) => Api.get(`/admin/jobs?postedBy=${teamMemberId}&page=${page}&limit=${limit}`);
 export const adminPostedJobs = (page = 1, limit = 10) => Api.get(`/admin/jobs?postedByAdmin=true&page=${page}&limit=${limit}`);
 
@@ -81,3 +82,6 @@ export const getTeamDetails = () => Api.get("/elite-team");
 
 // ============== Delete Account ============== 
 export const deleteAccount = (id) => Api.delete(`/admin/users/${id}`);
+
+// ============== User Statistics ==============
+export const getUserStatistics = (params = {}) => Api.get('/admin/statistics/users', { params });

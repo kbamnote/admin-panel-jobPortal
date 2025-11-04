@@ -12,10 +12,12 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.16",
     "axios": "^1.13.1",
+    "chart.js": "^4.5.1",
     "js-cookie": "^3.0.5",
     "lucide": "^0.552.0",
     "lucide-react": "^0.552.0",
     "react": "^19.2.0",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5",
     "tailwindcss": "^4.1.16"

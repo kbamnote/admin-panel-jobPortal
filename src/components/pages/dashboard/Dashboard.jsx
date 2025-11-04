@@ -1,8 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { allJobs, allApplicants, getTeamDetails, getAllApplicants } from '../../utils/Api';
+import { allJobs, allApplicants, getTeamDetails, getAllApplicants, getUserStatistics } from '../../utils/Api';
 import { Users, Briefcase, FileText, Users2, Building, Clock } from 'lucide-react';
 import Cookies from 'js-cookie';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -14,10 +37,51 @@ const Dashboard = () => {
     activeJobs: 0,
     totalUsers: 0
   });
+  const [userStats, setUserStats] = useState({
+    overallStats: {
+      weeklyStats: [],
+      monthlyStats: [],
+      totalUsers: 0
+    },
+    roleStats: {
+      eliteTeam: 0,
+      jobSeeker: 0,
+      recruiter: 0,
+      admin: 0,
+      jobHoster: 0
+    }
+  });
   const [loading, setLoading] = useState(true);
+  const [userStatsLoading, setUserStatsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [recentJobs, setRecentJobs] = useState([]);
   const [recentApplicants, setRecentApplicants] = useState([]);
+  const [filterRole, setFilterRole] = useState('all');
+  const [filterPeriod, setFilterPeriod] = useState('week');
+
+  const handleFilterChange = async (role, period) => {
+    setUserStatsLoading(true);
+    try {
+      const response = await getUserStatistics({ role, period });
+      if (response.data.success) {
+        setUserStats(response.data.data);
+      }
+    } catch (err) {
+      setError('Error fetching user statistics: ' + err.message);
+    } finally {
+      setUserStatsLoading(false);
+    }
+  };
+
+  const handleRoleChange = (role) => {
+    setFilterRole(role);
+    handleFilterChange(role, filterPeriod);
+  };
+
+  const handlePeriodChange = (period) => {
+    setFilterPeriod(period);
+    handleFilterChange(filterRole, period);
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -25,11 +89,12 @@ const Dashboard = () => {
         setLoading(true);
         
         // Fetch all required data in parallel
-        const [jobsResponse, applicantsResponse, teamResponse, allUsersResponse] = await Promise.all([
+        const [jobsResponse, applicantsResponse, teamResponse, allUsersResponse, userStatsResponse] = await Promise.all([
           allJobs(1, 100), // Get first 100 jobs to count total and active
           allApplicants(1, 100), // Get first 100 applicants
           getTeamDetails(),
-          getAllApplicants()
+          getAllApplicants(),
+          getUserStatistics({ period: 'week', role: 'all' })
         ]);
 
         // Process jobs data
@@ -70,6 +135,26 @@ const Dashboard = () => {
           totalUsers = allUsersResponse.data.data.length || 0;
         }
 
+        // Process user statistics data
+        let userStatsData = {
+          overallStats: {
+            weeklyStats: [],
+            monthlyStats: [],
+            totalUsers: 0
+          },
+          roleStats: {
+            eliteTeam: 0,
+            jobSeeker: 0,
+            recruiter: 0,
+            admin: 0,
+            jobHoster: 0
+          }
+        };
+      
+        if (userStatsResponse.data.success) {
+          userStatsData = userStatsResponse.data.data;
+        }
+
         setStats({
           totalJobs,
           totalApplicants,
@@ -78,12 +163,14 @@ const Dashboard = () => {
           totalUsers
         });
 
+        setUserStats(userStatsData);
         setRecentJobs(jobsData);
         setRecentApplicants(applicantsData);
       } catch (err) {
         setError('Error fetching dashboard data: ' + err.message);
       } finally {
         setLoading(false);
+        setUserStatsLoading(false);
       }
     };
 
@@ -150,6 +237,84 @@ const Dashboard = () => {
     );
   }
 
+  const prepareChartData = () => {
+    if (!userStats.overallStats) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+
+    // Get data based on selected period
+    let chartData = [];
+    if (filterPeriod === 'week') {
+      chartData = userStats.overallStats.weeklyStats || [];
+    } else {
+      chartData = userStats.overallStats.monthlyStats || [];
+    }
+
+    // Extract labels and data points
+    let labels = [];
+    let dataPoints = [];
+  
+    if (filterPeriod === 'week') {
+      // For weekly data, use days
+      labels = chartData.map(item => item.day || item.date);
+      dataPoints = chartData.map(item => item.count || 0);
+    } else {
+      // For monthly data, use week ranges
+      labels = chartData.map(item => {
+        if (item.weekStart && item.weekEnd) {
+          const start = new Date(item.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const end = new Date(item.weekEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          return `${start} - ${end}`;
+        }
+        return item.weekStart || 'Unknown';
+      });
+      dataPoints = chartData.map(item => item.count || 0);
+    }
+
+    // Create dataset
+    const dataset = {
+      label: 'User Registrations',
+      data: dataPoints,
+      borderColor: '#3b82f6',
+      backgroundColor: '#3b82f633',
+      fill: true,
+      tension: 0.4
+    };
+
+    return {
+      labels: labels,
+      datasets: [dataset]
+    };
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'User Growth Over Time',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0
+        }
+      }
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index',
+    }
+  };
+
   return (
     <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
       <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-6">Dashboard</h1>
@@ -204,6 +369,87 @@ const Dashboard = () => {
             <Users className="h-10 w-10 opacity-80" />
           </div>
         </div>
+      </div>
+      
+      {/* User Statistics Section */}
+      <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 md:mb-0">
+            User Statistics
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center">
+              <label className="mr-2 text-sm text-[var(--color-text-secondary)]">Period:</label>
+              <select 
+                value={filterPeriod}
+                onChange={(e) => handlePeriodChange(e.target.value)}
+                className="border border-[var(--color-border)] rounded-md px-2 py-1 text-sm"
+              >
+                <option value="week">Weekly</option>
+                <option value="month">Monthly</option>
+              </select>
+            </div>
+            <div className="flex items-center">
+              <label className="mr-2 text-sm text-[var(--color-text-secondary)]">Role:</label>
+              <select 
+                value={filterRole}
+                onChange={(e) => handleRoleChange(e.target.value)}
+                className="border border-[var(--color-border)] rounded-md px-2 py-1 text-sm"
+              >
+                <option value="all">All Roles</option>
+                <option value="jobSeeker">Job Seekers</option>
+                <option value="jobHoster">Job Hosters</option>
+                <option value="recruiter">Recruiters</option>
+                <option value="eliteTeam">Elite Team</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        {userStatsLoading ? (
+          <div className="animate-pulse h-64 flex items-center justify-center">
+            <div className="text-[var(--color-text-muted)]">Loading statistics...</div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
+                <p className="text-sm text-[var(--color-text-secondary)]">Job Seekers</p>
+                <p className="text-2xl font-bold text-[var(--color-primary)]">
+                  {userStats.roleStats?.jobSeeker || 0}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
+                <p className="text-sm text-[var(--color-text-secondary)]">Job Hosters</p>
+                <p className="text-2xl font-bold text-[#10b981]">
+                  {userStats.roleStats?.jobHoster || 0}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
+                <p className="text-sm text-[var(--color-text-secondary)]">Recruiters</p>
+                <p className="text-2xl font-bold text-[#8b5cf6]">
+                  {userStats.roleStats?.recruiter || 0}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
+                <p className="text-sm text-[var(--color-text-secondary)]">Elite Team</p>
+                <p className="text-2xl font-bold text-[#f59e0b]">
+                  {userStats.roleStats?.eliteTeam || 0}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
+                <p className="text-sm text-[var(--color-text-secondary)]">Total Users</p>
+                <p className="text-2xl font-bold text-[#ef4444]">
+                  {userStats.overallStats?.totalUsers || 0}
+                </p>
+              </div>
+            </div>
+            
+            <div className="h-80">
+              <Line data={prepareChartData()} options={chartOptions} />
+            </div>
+          </>
+        )}
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
