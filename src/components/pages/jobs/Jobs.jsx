@@ -4,7 +4,7 @@ import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails }
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
 import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
-import { MapPin, Building, Clock, DollarSign, Calendar, Trash2, Eye, Image as ImageIcon } from 'lucide-react';
+import { MapPin, Building, Clock, DollarSign, Calendar, Trash2, Eye, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import Cookies from 'js-cookie';
 
 const Jobs = () => {
@@ -23,6 +23,10 @@ const Jobs = () => {
   const [teamMembers, setTeamMembers] = useState([]);
   const [filterType, setFilterType] = useState('all'); // 'all', 'admin', 'teamMember'
   const [selectedTeamMember, setSelectedTeamMember] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [limit] = useState(10); // Items per page
 
   useEffect(() => {
     const fetchTeamMembers = async () => {
@@ -47,27 +51,31 @@ const Jobs = () => {
         
         // For eliteTeam role, only show all jobs (no filtering)
         if (userRole === 'eliteTeam') {
-          response = await allJobs();
+          response = await allJobs(currentPage, limit);
         } else {
           // Admin role can use filters
           switch (filterType) {
             case 'admin':
-              response = await adminPostedJobs();
+              response = await adminPostedJobs(currentPage, limit);
               break;
             case 'teamMember':
               if (selectedTeamMember) {
-                response = await jobsByTeamMember(selectedTeamMember);
+                response = await jobsByTeamMember(selectedTeamMember, currentPage, limit);
               } else {
-                response = await allJobs();
+                response = await allJobs(currentPage, limit);
               }
               break;
             default: // 'all'
-              response = await allJobs();
+              response = await allJobs(currentPage, limit);
           }
         }
         
         if (response && response.data.success) {
-          setJobs(response.data.data.jobs || response.data.data);
+          const data = response.data.data;
+          setJobs(data.jobs || data);
+          setTotalPages(data.totalPages || 1);
+          setCurrentPage(data.currentPage || 1);
+          setTotalJobs(data.totalJobs || data.length || 0);
         } else {
           setError('Failed to fetch jobs');
         }
@@ -79,7 +87,7 @@ const Jobs = () => {
     };
 
     fetchJobs();
-  }, [filterType, selectedTeamMember, userRole]);
+  }, [filterType, selectedTeamMember, userRole, currentPage, limit]);
 
   const handleViewDetails = (jobId) => {
     navigate(`/jobs/${jobId}`);
@@ -103,6 +111,8 @@ const Jobs = () => {
         setJobToDelete(null);
         setSuccessMessage('Job deleted successfully!');
         setIsSuccessModalOpen(true);
+        // Also update total jobs count
+        setTotalJobs(prev => prev - 1);
       } else {
         setErrorMessage('Failed to delete job: ' + response.data.message);
         setIsErrorModalOpen(true);
@@ -128,6 +138,20 @@ const Jobs = () => {
     if (e.target.value !== 'teamMember') {
       setSelectedTeamMember('');
     }
+    // Reset to first page when filter changes
+    setCurrentPage(1);
+  };
+
+  const handleTeamMemberChange = (e) => {
+    setSelectedTeamMember(e.target.value);
+    // Reset to first page when team member changes
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
   };
 
   if (loading) {
@@ -150,7 +174,7 @@ const Jobs = () => {
               {filterType === 'teamMember' && (
                 <select 
                   value={selectedTeamMember}
-                  onChange={(e) => setSelectedTeamMember(e.target.value)}
+                  onChange={handleTeamMemberChange}
                   className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
                 >
                   <option value="">Select Team Member</option>
@@ -210,7 +234,7 @@ const Jobs = () => {
               {filterType === 'teamMember' && (
                 <select 
                   value={selectedTeamMember}
-                  onChange={(e) => setSelectedTeamMember(e.target.value)}
+                  onChange={handleTeamMemberChange}
                   className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
                 >
                   <option value="">Select Team Member</option>
@@ -277,7 +301,7 @@ const Jobs = () => {
             {filterType === 'teamMember' && (
               <select 
                 value={selectedTeamMember}
-                onChange={(e) => setSelectedTeamMember(e.target.value)}
+                onChange={handleTeamMemberChange}
                 className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
               >
                 <option value="">Select Team Member</option>
@@ -291,7 +315,7 @@ const Jobs = () => {
           </div>
         )}
         <div className="text-sm text-[var(--color-text-muted)]">
-          {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'} found
+          {totalJobs} {totalJobs === 1 ? 'job' : 'jobs'} found
         </div>
       </div>
       
@@ -312,89 +336,125 @@ const Jobs = () => {
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {jobs.map((job) => (
-            <div 
-              key={job._id} 
-              className="border border-[var(--color-border)] rounded-xl p-6 bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-all duration-300 hover:border-[var(--color-primary)]"
-            >
-              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                <div className="flex-1">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                    <h3 className="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] cursor-pointer transition-colors">
-                      {job.title}
-                    </h3>
-                   
-                  </div>
-                  
-                  <div className="flex items-start mb-4">
-                    {job.company?.logo ? (
-                      <img 
-                        src={job.company.logo} 
-                        alt={job.company.name} 
-                        className="w-12 h-12 object-contain rounded-md mr-3 border border-[var(--color-border)]"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-md mr-3 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
-                        <Building className="h-6 w-6 text-[var(--color-text-muted)]" />
+        <>
+          <div className="space-y-6">
+            {jobs.map((job) => (
+              <div 
+                key={job._id} 
+                className="border border-[var(--color-border)] rounded-xl p-6 bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-all duration-300 hover:border-[var(--color-primary)]"
+              >
+                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                  <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                      <h3 className="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] cursor-pointer transition-colors">
+                        {job.title}
+                      </h3>
+                    </div>
+                    
+                    <div className="flex items-start mb-4">
+                      {job.company?.logo ? (
+                        <img 
+                          src={job.company.logo} 
+                          alt={job.company.name} 
+                          className="w-12 h-12 object-contain rounded-md mr-3 border border-[var(--color-border)]"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-md mr-3 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
+                          <Building className="h-6 w-6 text-[var(--color-text-muted)]" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium text-[var(--color-primary)]">{job.company?.name}</div>
+                        <div className="text-sm text-[var(--color-text-muted)] mt-1 line-clamp-2">
+                          {job.company?.description || 'No company description provided'}
+                        </div>
                       </div>
-                    )}
-                    <div>
-                      <div className="font-medium text-[var(--color-primary)]">{job.company?.name}</div>
-                      <div className="text-sm text-[var(--color-text-muted)] mt-1 line-clamp-2">
-                        {job.company?.description || 'No company description provided'}
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      <div className="flex items-center text-[var(--color-text-muted)]">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        <span className="text-sm">{job.location?.[0] || 'Location not specified'}</span>
+                      </div>
+                      <div className="flex items-center text-[var(--color-text-muted)]">
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        <span className="text-sm">
+                          {job.salary?.min ? 
+                            `${(job.salary.min/100000).toFixed(1)}-${(job.salary.max/100000).toFixed(1)}L ${job.salary.currency}` : 
+                            'Not disclosed'}
+                        </span>
+                      </div>
+                      <div className="flex items-center text-[var(--color-text-muted)]">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span className="text-sm">{job.jobType}</span>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    <div className="flex items-center text-[var(--color-text-muted)]">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      <span className="text-sm">{job.location?.[0] || 'Location not specified'}</span>
-                    </div>
-                    <div className="flex items-center text-[var(--color-text-muted)]">
-                      <DollarSign className="h-4 w-4 mr-1" />
-                      <span className="text-sm">
-                        {job.salary?.min ? 
-                          `${(job.salary.min/100000).toFixed(1)}-${(job.salary.max/100000).toFixed(1)}L ${job.salary.currency}` : 
-                          'Not disclosed'}
-                      </span>
-                    </div>
-                    <div className="flex items-center text-[var(--color-text-muted)]">
-                      <Clock className="h-4 w-4 mr-1" />
-                      <span className="text-sm">{job.jobType}</span>
+                    
+                    <div className="flex items-center text-[var(--color-text-muted)] text-sm">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>Posted on {formatDate(job.createdAt)}</span>
                     </div>
                   </div>
                   
-                  <div className="flex items-center text-[var(--color-text-muted)] text-sm">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    <span>Posted on {formatDate(job.createdAt)}</span>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row md:flex-col md:items-end gap-3">
-                  <button
-                    onClick={() => handleViewDetails(job._id)}
-                    className="flex items-center px-4 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Details
-                  </button>
-                  {/* Only show delete button for admin role */}
-                  {userRole === 'admin' && (
+                  <div className="flex flex-col sm:flex-row md:flex-col md:items-end gap-3">
                     <button
-                      onClick={() => handleDeleteClick(job)}
-                      className="flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[#dc2626] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-error)] focus:ring-offset-2"
+                      onClick={() => handleViewDetails(job._id)}
+                      className="flex items-center px-4 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Details
                     </button>
-                  )}
+                    {/* Only show delete button for admin role */}
+                    {userRole === 'admin' && (
+                      <button
+                        onClick={() => handleDeleteClick(job)}
+                        className="flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[#dc2626] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-error)] focus:ring-offset-2"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-8">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`flex items-center px-4 py-2 rounded-lg ${
+                  currentPage === 1 
+                    ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed' 
+                    : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
+                }`}
+              >
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Previous
+              </button>
+              
+              <div className="text-sm text-[var(--color-text-muted)]">
+                Page {currentPage} of {totalPages}
+              </div>
+              
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`flex items-center px-4 py-2 rounded-lg ${
+                  currentPage === totalPages 
+                    ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed' 
+                    : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
+                }`}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Success Modal */}

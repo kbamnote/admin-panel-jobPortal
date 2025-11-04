@@ -44,10 +44,9 @@ export const login = (post) => {
 };
 
 // ============== All Jobs GET ==============
-export const allJobs = () => Api.get("/jobs");
-export const jobsById = (id) => Api.get(`/jobs/${id}`);
-export const jobsByTeamMember = (teamMemberId) => Api.get(`/admin/jobs?postedBy=${teamMemberId}`);
-export const adminPostedJobs = () => Api.get("/admin/jobs?postedByAdmin=true");
+export const allJobs = (page = 1, limit = 10) => Api.get(`/jobs?page=${page}&limit=${limit}`);
+export const jobsByTeamMember = (teamMemberId, page = 1, limit = 10) => Api.get(`/admin/jobs?postedBy=${teamMemberId}&page=${page}&limit=${limit}`);
+export const adminPostedJobs = (page = 1, limit = 10) => Api.get(`/admin/jobs?postedByAdmin=true&page=${page}&limit=${limit}`);
 
 // ============== Job Management ==============
 export const createJob = (jobData) => Api.post("/jobs", jobData);
@@ -71,7 +70,7 @@ export const updateCompanyLogo = (formData) =>
   });
 
 // ============== All Jobs GET ==============
-export const allApplicants = () => Api.get("/admin/jobseekers");
+export const allApplicants = (page = 1, limit = 10) => Api.get(`/admin/jobseekers?page=${page}&limit=${limit}`);
 export const applicantsById = (id) => Api.get(`/admin/jobseekers/${id}`);
 
 // ============== Team Management ==============
