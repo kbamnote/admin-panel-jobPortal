@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { allJobs, allApplicants, getTeamDetails, getAllApplicants, getUserStatistics, getJobCategories } from '../../utils/Api';
-import { Users, Briefcase, FileText, Users2, Building, Clock } from 'lucide-react';
+import { allJobs, allApplicants, getTeamDetails, getAllApplicants, getUserStatistics, getJobCategories, getJobVerificationCounts } from '../../utils/Api';
+import { Users, Briefcase, FileText, Users2, Building, Check, X, AlertCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
 import {
   Chart as ChartJS,
@@ -36,8 +36,13 @@ const Dashboard = () => {
     totalJobs: 0,
     totalApplicants: 0,
     totalTeamMembers: 0,
-    activeJobs: 0,
     totalUsers: 0
+  });
+  const [verificationCounts, setVerificationCounts] = useState({
+    verified: 0,
+    notVerified: 0,
+    withoutVerificationStatus: 0,
+    total: 0
   });
   const [userStats, setUserStats] = useState({
     overallStats: {
@@ -93,24 +98,23 @@ const Dashboard = () => {
         setLoading(true);
         
         // Fetch all required data in parallel
-        const [jobsResponse, applicantsResponse, teamResponse, allUsersResponse, userStatsResponse, jobCategoriesResponse] = await Promise.all([
-          allJobs(1, 100), // Get first 100 jobs to count total and active
+        const [jobsResponse, applicantsResponse, teamResponse, allUsersResponse, userStatsResponse, jobCategoriesResponse, verificationCountsResponse] = await Promise.all([
+          allJobs(1, 100), // Get first 100 jobs to count total
           allApplicants(1, 100), // Get first 100 applicants
           getTeamDetails(),
           getAllApplicants(),
           getUserStatistics({ period: 'week', role: 'all' }),
-          getJobCategories()
+          getJobCategories(),
+          getJobVerificationCounts()
         ]);
 
         // Process jobs data
         let totalJobs = 0;
-        let activeJobs = 0;
         let jobsData = [];
         
         if (jobsResponse.data.success) {
           const jobs = jobsResponse.data.data.jobs || jobsResponse.data.data;
           totalJobs = jobsResponse.data.data.totalJobs || jobs.length || 0;
-          activeJobs = jobs.filter(job => job.isActive).length;
           // Get 5 most recent jobs
           jobsData = jobs.slice(0, 5);
         }
@@ -167,14 +171,26 @@ const Dashboard = () => {
           jobCategoriesData = jobCategoriesResponse.data.data;
         }
 
+        // Process verification counts data
+        let verificationCountsData = {
+          verified: 0,
+          notVerified: 0,
+          withoutVerificationStatus: 0,
+          total: 0
+        };
+        
+        if (verificationCountsResponse.data.success) {
+          verificationCountsData = verificationCountsResponse.data.data;
+        }
+
         setStats({
           totalJobs,
           totalApplicants,
           totalTeamMembers,
-          activeJobs,
           totalUsers
         });
 
+        setVerificationCounts(verificationCountsData);
         setUserStats(userStatsData);
         setJobCategories(jobCategoriesData);
         setRecentJobs(jobsData);
@@ -402,13 +418,33 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-[var(--color-accent)] to-[#E94560] p-6 rounded-xl text-white">
+        <div className="bg-gradient-to-br from-[#10b981] to-[#047857] p-6 rounded-xl text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm opacity-80">Active Jobs</p>
-              <p className="text-3xl font-bold mt-1">{stats.activeJobs}</p>
+              <p className="text-sm opacity-80">Verified Jobs</p>
+              <p className="text-3xl font-bold mt-1">{verificationCounts.verified}</p>
             </div>
-            <Clock className="h-10 w-10 opacity-80" />
+            <Check className="h-10 w-10 opacity-80" />
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-[#f59e0b] to-[#d97706] p-6 rounded-xl text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-80">Not Verified</p>
+              <p className="text-3xl font-bold mt-1">{verificationCounts.notVerified}</p>
+            </div>
+            <X className="h-10 w-10 opacity-80" />
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] p-6 rounded-xl text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-80">Pending Review</p>
+              <p className="text-3xl font-bold mt-1">{verificationCounts.withoutVerificationStatus}</p>
+            </div>
+            <AlertCircle className="h-10 w-10 opacity-80" />
           </div>
         </div>
         
@@ -417,26 +453,6 @@ const Dashboard = () => {
             <div>
               <p className="text-sm opacity-80">Applicants</p>
               <p className="text-3xl font-bold mt-1">{stats.totalApplicants}</p>
-            </div>
-            <Users className="h-10 w-10 opacity-80" />
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-[#8b5cf6] to-[#7c3aed] p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm opacity-80">Team Members</p>
-              <p className="text-3xl font-bold mt-1">{stats.totalTeamMembers}</p>
-            </div>
-            <Users2 className="h-10 w-10 opacity-80" />
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-[#f59e0b] to-[#d97706] p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm opacity-80">Total Users</p>
-              <p className="text-3xl font-bold mt-1">{stats.totalUsers}</p>
             </div>
             <Users className="h-10 w-10 opacity-80" />
           </div>
@@ -555,13 +571,25 @@ const Dashboard = () => {
                 >
                   <div className="flex justify-between">
                     <h3 className="font-semibold text-[var(--color-text-primary)]">{job.title}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      job.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {job.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                    {/* Show verification status instead of active/inactive */}
+                    <div className="flex items-center">
+                      {job.verificationStatus === 'verified' ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                          <Check className="h-3 w-3 mr-1" />
+                          Verified
+                        </span>
+                      ) : job.verificationStatus === 'not verified' ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                          <X className="h-3 w-3 mr-1" />
+                          Not Verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Pending
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-[var(--color-text-secondary)] mt-1">{job.company?.name}</p>
                   <div className="flex justify-between items-center mt-3">

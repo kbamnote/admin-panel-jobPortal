@@ -88,3 +88,8 @@ export const getUserStatistics = (params = {}) => Api.get('/admin/statistics/use
 
 // ============== Job Categories ==============
 export const getJobCategories = () => Api.get('/jobs/categories');
+
+// ============== Job Verification Status ==============
+export const getJobsByVerificationStatus = (status, page = 1, limit = 10) => Api.get(`/jobs?verificationStatus=${encodeURIComponent(status)}&page=${page}&limit=${limit}`);
+export const updateJobVerificationStatus = (id, status) => Api.patch(`/jobs/${id}/verification`, { verificationStatus: status });
+export const getJobVerificationCounts = () => Api.get('/jobs/verification-counts');

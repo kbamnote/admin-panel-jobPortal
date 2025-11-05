@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails } from '../../utils/Api';
+import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails, getJobsByVerificationStatus } from '../../utils/Api';
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
 import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
@@ -23,6 +23,7 @@ const Jobs = () => {
   const [teamMembers, setTeamMembers] = useState([]);
   const [filterType, setFilterType] = useState('all'); // 'all', 'admin', 'teamMember'
   const [selectedTeamMember, setSelectedTeamMember] = useState('');
+  const [verificationStatus, setVerificationStatus] = useState('all'); // 'all', 'verified', 'not verified'
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
@@ -52,24 +53,33 @@ const Jobs = () => {
         setLoading(true);
         let response;
         
-        // For eliteTeam role, only show all jobs (no filtering)
+        // For eliteTeam role, show all jobs with verification status filtering
         if (userRole === 'eliteTeam') {
-          response = await allJobs(currentPage, limit);
+          if (verificationStatus === 'all') {
+            response = await allJobs(currentPage, limit);
+          } else {
+            response = await getJobsByVerificationStatus(verificationStatus, currentPage, limit);
+          }
         } else {
           // Admin role can use filters
-          switch (filterType) {
-            case 'admin':
-              response = await adminPostedJobs(currentPage, limit);
-              break;
-            case 'teamMember':
-              if (selectedTeamMember) {
-                response = await jobsByTeamMember(selectedTeamMember, currentPage, limit);
-              } else {
+          if (verificationStatus !== 'all') {
+            // Apply verification status filter to all job types
+            response = await getJobsByVerificationStatus(verificationStatus, currentPage, limit);
+          } else {
+            switch (filterType) {
+              case 'admin':
+                response = await adminPostedJobs(currentPage, limit);
+                break;
+              case 'teamMember':
+                if (selectedTeamMember) {
+                  response = await jobsByTeamMember(selectedTeamMember, currentPage, limit);
+                } else {
+                  response = await allJobs(currentPage, limit);
+                }
+                break;
+              default: // 'all'
                 response = await allJobs(currentPage, limit);
-              }
-              break;
-            default: // 'all'
-              response = await allJobs(currentPage, limit);
+            }
           }
         }
         
@@ -90,7 +100,7 @@ const Jobs = () => {
     };
 
     fetchJobs();
-  }, [filterType, selectedTeamMember, userRole, currentPage, limit]);
+  }, [filterType, selectedTeamMember, userRole, currentPage, limit, verificationStatus]);
 
   const handleViewDetails = (jobId) => {
     navigate(`/jobs/${jobId}`);
@@ -148,6 +158,12 @@ const Jobs = () => {
   const handleTeamMemberChange = (e) => {
     setSelectedTeamMember(e.target.value);
     // Reset to first page when team member changes
+    setCurrentPage(1);
+  };
+
+  const handleVerificationStatusChange = (e) => {
+    setVerificationStatus(e.target.value);
+    // Reset to first page when verification status changes
     setCurrentPage(1);
   };
 
@@ -289,34 +305,48 @@ const Jobs = () => {
     <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{getFilterTitle()}</h2>
-        {/* Hide filter dropdown for eliteTeam role */}
-        {userRole === 'admin' && (
-          <div className="flex flex-col sm:flex-row gap-2">
-            <select 
-              value={filterType}
-              onChange={handleFilterChange}
-              className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
-            >
-              <option value="all">All Posted Jobs</option>
-              <option value="admin">Admin Posted Jobs</option>
-              <option value="teamMember">Team Member Jobs</option>
-            </select>
-            {filterType === 'teamMember' && (
+        {/* Show filter dropdowns for both admin and eliteTeam roles */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          {/* Verification Status Filter - shown for both roles */}
+          <select 
+            value={verificationStatus}
+            onChange={handleVerificationStatusChange}
+            className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          >
+            <option value="all">All Jobs</option>
+            <option value="verified">Verified Jobs</option>
+            <option value="not verified">Not Verified Jobs</option>
+          </select>
+          
+          {/* Original filters - only for admin role */}
+          {userRole === 'admin' && (
+            <>
               <select 
-                value={selectedTeamMember}
-                onChange={handleTeamMemberChange}
+                value={filterType}
+                onChange={handleFilterChange}
                 className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
               >
-                <option value="">Select Team Member</option>
-                {teamMembers.map(member => (
-                  <option key={member._id} value={member._id}>
-                    {member.name}
-                  </option>
-                ))}
+                <option value="all">All Posted Jobs</option>
+                <option value="admin">Admin Posted Jobs</option>
+                <option value="teamMember">Team Member Jobs</option>
               </select>
-            )}
-          </div>
-        )}
+              {filterType === 'teamMember' && (
+                <select 
+                  value={selectedTeamMember}
+                  onChange={handleTeamMemberChange}
+                  className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                >
+                  <option value="">Select Team Member</option>
+                  {teamMembers.map(member => (
+                    <option key={member._id} value={member._id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
+          )}
+        </div>
         <div className="text-sm text-[var(--color-text-muted)]">
           {totalJobs} {totalJobs === 1 ? 'job' : 'jobs'} found
         </div>
@@ -352,6 +382,18 @@ const Jobs = () => {
                       <h3 className="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] cursor-pointer transition-colors">
                         {job.title}
                       </h3>
+                      {/* Display verification status badge */}
+                      <div className="flex items-center">
+                        {job.verificationStatus === 'verified' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Not Verified
+                          </span>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="flex items-start mb-4">

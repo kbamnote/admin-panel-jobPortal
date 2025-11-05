@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { jobsById, deleteJob } from '../../utils/Api';
+import { jobsById, deleteJob, updateJobVerificationStatus } from '../../utils/Api';
 import Modal from '../../common/modal/Modal';
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
@@ -24,7 +24,9 @@ import {
   Users,
   GraduationCap,
   Briefcase,
-  Sun
+  Sun,
+  Check,
+  X
 } from 'lucide-react';
 import Cookies from 'js-cookie';
 
@@ -42,6 +44,7 @@ const JobDetails = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingVerification, setIsUpdatingVerification] = useState(false);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -94,6 +97,30 @@ const JobDetails = () => {
       setIsErrorModalOpen(true);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleVerificationStatusUpdate = async (status) => {
+    try {
+      setIsUpdatingVerification(true);
+      const response = await updateJobVerificationStatus(id, status);
+      if (response.data.success) {
+        // Update the job state with the new verification status
+        setJob(prevJob => ({
+          ...prevJob,
+          verificationStatus: status
+        }));
+        setSuccessMessage(`Job ${status} successfully!`);
+        setIsSuccessModalOpen(true);
+      } else {
+        setErrorMessage('Failed to update verification status: ' + response.data.message);
+        setIsErrorModalOpen(true);
+      }
+    } catch (err) {
+      setErrorMessage('Error updating verification status: ' + (err.response?.data?.message || err.message));
+      setIsErrorModalOpen(true);
+    } finally {
+      setIsUpdatingVerification(false);
     }
   };
 
@@ -257,7 +284,49 @@ const JobDetails = () => {
             <User className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
             <span>{job.experienceLevel}</span>
           </div>
+          {/* Verification Status Badge */}
+          <div className="flex items-center text-[var(--color-text-secondary)]">
+            {job.verificationStatus === 'verified' ? (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <Check className="h-4 w-4 mr-1" />
+                Verified
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                <X className="h-4 w-4 mr-1" />
+                Not Verified
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Verification Status Update Buttons - for admin and eliteTeam */}
+        {(userRole === 'admin' || userRole === 'eliteTeam') && (
+          <div className="bg-[var(--color-accent-light)] rounded-xl p-4 mb-6">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-3">Verification Status</h3>
+            <div className="flex flex-wrap gap-3">
+              {job.verificationStatus !== 'verified' ? (
+                <button
+                  onClick={() => handleVerificationStatusUpdate('verified')}
+                  disabled={isUpdatingVerification}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  {isUpdatingVerification ? 'Verifying...' : 'Mark as Verified'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleVerificationStatusUpdate('not verified')}
+                  disabled={isUpdatingVerification}
+                  className="flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  {isUpdatingVerification ? 'Updating...' : 'Mark as Not Verified'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="bg-[var(--color-accent-light)] rounded-xl p-5 mb-8">
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-3">Job Overview</h2>
