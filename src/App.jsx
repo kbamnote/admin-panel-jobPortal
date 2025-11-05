@@ -16,15 +16,43 @@ import './App.css';
 import Cookies from 'js-cookie';
 
 // Protected Route Component
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const token = Cookies.get('token');
-  return token ? children : <Navigate to="/login" replace />;
+  const userRole = Cookies.get('userRole');
+  
+  // If no token, redirect to login
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // If allowedRoles is specified and userRole is not in allowedRoles, redirect to appropriate page
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+    // Redirect eliteTeam members to jobs page
+    if (userRole === 'eliteTeam') {
+      return <Navigate to="/jobs" replace />;
+    }
+    // For other roles, redirect to dashboard
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return children;
 };
 
-// Public Route Component (redirect to dashboard if already logged in)
+// Public Route Component (redirect to appropriate page if already logged in)
 const PublicRoute = ({ children }) => {
   const token = Cookies.get('token');
-  return token ? <Navigate to="/dashboard" replace /> : children;
+  const userRole = Cookies.get('userRole');
+  
+  if (token) {
+    // If user is eliteTeam, redirect to jobs page
+    if (userRole === 'eliteTeam') {
+      return <Navigate to="/jobs" replace />;
+    }
+    // For other roles, redirect to dashboard
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return children;
 };
 
 function App() {
@@ -35,7 +63,7 @@ function App() {
           {/* Default route - redirect to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           
-          {/* Login route - redirect to dashboard if already authenticated */}
+          {/* Login route - redirect to appropriate page if already authenticated */}
           <Route 
             path="/login" 
             element={
@@ -49,7 +77,7 @@ function App() {
           <Route 
             path="/dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'recruiter', 'jobHoster']}>
                 <Layout>
                   <Dashboard />
                 </Layout>
@@ -104,7 +132,7 @@ function App() {
           <Route 
             path="/applicants/:id" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <Layout>
                   <ApplicantsDetails />
                 </Layout>
@@ -115,7 +143,7 @@ function App() {
           <Route 
             path="/applicants" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <Layout>
                   <Applicants />
                 </Layout>
@@ -126,7 +154,7 @@ function App() {
           <Route 
             path="/all-role-details" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <Layout>
                   <AllRoleDetails />
                 </Layout>
@@ -148,7 +176,7 @@ function App() {
           <Route 
             path="/team" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <Layout>
                   <Team />
                 </Layout>
@@ -156,7 +184,7 @@ function App() {
             } 
           />
           
-          {/* Catch all route - redirect to dashboard */}
+          {/* Catch all route - redirect to appropriate page */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </div>

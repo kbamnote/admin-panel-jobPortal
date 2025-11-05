@@ -29,19 +29,22 @@ const Jobs = () => {
   const [limit] = useState(10); // Items per page
 
   useEffect(() => {
-    const fetchTeamMembers = async () => {
-      try {
-        const response = await getTeamDetails();
-        if (response.data.success) {
-          setTeamMembers(response.data.data);
+    // Only fetch team members for admin role, not for eliteTeam
+    if (userRole === 'admin') {
+      const fetchTeamMembers = async () => {
+        try {
+          const response = await getTeamDetails();
+          if (response.data.success) {
+            setTeamMembers(response.data.data);
+          }
+        } catch (err) {
+          console.error('Error fetching team members:', err);
         }
-      } catch (err) {
-        console.error('Error fetching team members:', err);
-      }
-    };
+      };
 
-    fetchTeamMembers();
-  }, []);
+      fetchTeamMembers();
+    }
+  }, [userRole]);
 
   useEffect(() => {
     const fetchJobs = async () => {

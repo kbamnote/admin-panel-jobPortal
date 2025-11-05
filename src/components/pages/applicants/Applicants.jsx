@@ -128,9 +128,22 @@ const Applicants = () => {
                 <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                   <div className="flex-1">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                      <h3 className="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] cursor-pointer transition-colors">
-                        {applicant.name}
-                      </h3>
+                      <div className="flex items-center">
+                        {applicant.profile?.photo ? (
+                          <img 
+                            src={applicant.profile.photo} 
+                            alt={applicant.name} 
+                            className="w-12 h-12 object-cover rounded-lg mr-4 border border-[var(--color-border)]"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg mr-4 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
+                            <User className="h-6 w-6 text-[var(--color-text-muted)]" />
+                          </div>
+                        )}
+                        <h3 className="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] cursor-pointer transition-colors">
+                          {applicant.name}
+                        </h3>
+                      </div>
                     </div>
                     
                     <div className="flex flex-wrap gap-3 mb-4">

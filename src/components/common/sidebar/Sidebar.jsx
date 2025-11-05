@@ -12,7 +12,8 @@ const Sidebar = () => {
 
   // Filter nav items based on user role
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    // Only show Dashboard for admin, recruiter, and jobHoster roles, not for eliteTeam
+    ...(userRole !== 'eliteTeam' ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }] : []),
     { name: 'Jobs', href: '/jobs', icon: Briefcase, hasDropdown: true },
     // Only show these items for admin role
     ...(userRole === 'admin' ? [

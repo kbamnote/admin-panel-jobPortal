@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { allJobs, allApplicants, getTeamDetails, getAllApplicants, getUserStatistics } from '../../utils/Api';
+import { allJobs, allApplicants, getTeamDetails, getAllApplicants, getUserStatistics, getJobCategories } from '../../utils/Api';
 import { Users, Briefcase, FileText, Users2, Building, Clock } from 'lucide-react';
 import Cookies from 'js-cookie';
 import {
@@ -12,9 +12,10 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ArcElement
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { Line, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,
@@ -24,7 +25,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ArcElement
 );
 
 const Dashboard = () => {
@@ -51,8 +53,10 @@ const Dashboard = () => {
       jobHoster: 0
     }
   });
+  const [jobCategories, setJobCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userStatsLoading, setUserStatsLoading] = useState(true);
+  const [jobCategoriesLoading, setJobCategoriesLoading] = useState(true);
   const [error, setError] = useState(null);
   const [recentJobs, setRecentJobs] = useState([]);
   const [recentApplicants, setRecentApplicants] = useState([]);
@@ -89,12 +93,13 @@ const Dashboard = () => {
         setLoading(true);
         
         // Fetch all required data in parallel
-        const [jobsResponse, applicantsResponse, teamResponse, allUsersResponse, userStatsResponse] = await Promise.all([
+        const [jobsResponse, applicantsResponse, teamResponse, allUsersResponse, userStatsResponse, jobCategoriesResponse] = await Promise.all([
           allJobs(1, 100), // Get first 100 jobs to count total and active
           allApplicants(1, 100), // Get first 100 applicants
           getTeamDetails(),
           getAllApplicants(),
-          getUserStatistics({ period: 'week', role: 'all' })
+          getUserStatistics({ period: 'week', role: 'all' }),
+          getJobCategories()
         ]);
 
         // Process jobs data
@@ -155,6 +160,13 @@ const Dashboard = () => {
           userStatsData = userStatsResponse.data.data;
         }
 
+        // Process job categories data
+        let jobCategoriesData = [];
+        
+        if (jobCategoriesResponse.data.success) {
+          jobCategoriesData = jobCategoriesResponse.data.data;
+        }
+
         setStats({
           totalJobs,
           totalApplicants,
@@ -164,6 +176,7 @@ const Dashboard = () => {
         });
 
         setUserStats(userStatsData);
+        setJobCategories(jobCategoriesData);
         setRecentJobs(jobsData);
         setRecentApplicants(applicantsData);
       } catch (err) {
@@ -171,6 +184,7 @@ const Dashboard = () => {
       } finally {
         setLoading(false);
         setUserStatsLoading(false);
+        setJobCategoriesLoading(false);
       }
     };
 
@@ -196,7 +210,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
-        <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-6">Dashboard</h1>
+        
         <div className="animate-pulse">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             {[1, 2, 3, 4, 5].map((item) => (
@@ -228,7 +242,7 @@ const Dashboard = () => {
   if (error) {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
-        <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-6">Dashboard</h1>
+        
         <div className="text-[var(--color-error)] text-center py-12 bg-[var(--color-accent-light)] rounded-lg">
           <div className="text-xl font-semibold mb-2">Error Loading Dashboard</div>
           <p>{error}</p>
@@ -315,9 +329,67 @@ const Dashboard = () => {
     }
   };
 
+  const prepareDoughnutChartData = () => {
+    if (!jobCategories || jobCategories.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+
+    // Filter out categories with zero count for better visualization
+    const filteredCategories = jobCategories.filter(category => category.count > 0);
+    
+    const labels = filteredCategories.map(category => category.category);
+    const data = filteredCategories.map(category => category.count);
+    
+    // Define colors for the doughnut chart
+    const backgroundColors = [
+      '#3b82f6', // blue
+      '#10b981', // green
+      '#8b5cf6', // purple
+      '#f59e0b', // amber
+      '#ef4444', // red
+      '#06b6d4', // cyan
+      '#8b5cf6', // violet
+      '#ec4899', // pink
+      '#f97316'  // orange
+    ];
+    
+    const borderColors = backgroundColors.map(color => color + '80'); // Add transparency
+    
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: backgroundColors.slice(0, labels.length),
+          borderColor: borderColors.slice(0, labels.length),
+          borderWidth: 1,
+        }
+      ]
+    };
+  };
+
+  const doughnutChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right',
+      },
+      title: {
+        display: true,
+        text: 'Jobs by Category',
+        font: {
+          size: 16
+        }
+      }
+    },
+    cutout: '50%', // This makes it a donut chart
+  };
+
   return (
     <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
-      <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-6">Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <div className="bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-dark-secondary)] p-6 rounded-xl text-white">
@@ -445,8 +517,20 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <div className="h-80">
-              <Line data={prepareChartData()} options={chartOptions} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="h-80">
+                <Line data={prepareChartData()} options={chartOptions} />
+              </div>
+              <div className="h-80 flex items-center justify-center">
+                {jobCategoriesLoading ? (
+                  <div className="text-[var(--color-text-muted)]">Loading categories...</div>
+                ) : (
+                  <Doughnut 
+                    data={prepareDoughnutChartData()} 
+                    options={doughnutChartOptions} 
+                  />
+                )}
+              </div>
             </div>
           </>
         )}

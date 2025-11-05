@@ -85,3 +85,6 @@ export const deleteAccount = (id) => Api.delete(`/admin/users/${id}`);
 
 // ============== User Statistics ==============
 export const getUserStatistics = (params = {}) => Api.get('/admin/statistics/users', { params });
+
+// ============== Job Categories ==============
+export const getJobCategories = () => Api.get('/jobs/categories');

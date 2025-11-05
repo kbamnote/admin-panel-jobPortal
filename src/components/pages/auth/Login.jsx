@@ -56,9 +56,13 @@ const Login = () => {
         // Set success message
         setSuccess(response.data.message);
         
-        // Navigate to dashboard after a short delay
+        // Navigate to appropriate page based on role after a short delay
         setTimeout(() => {
-          navigate('/dashboard');
+          if (response.data.data.user.role === 'eliteTeam') {
+            navigate('/jobs');
+          } else {
+            navigate('/dashboard');
+          }
         }, 1500);
       } else {
         setError(response.data.message || 'Login failed');

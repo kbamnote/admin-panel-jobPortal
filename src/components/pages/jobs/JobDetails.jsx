@@ -405,9 +405,7 @@ const JobDetails = () => {
             <div>
               <h3 className="font-bold text-[var(--color-text-primary)] text-xl">{job.postedBy?.name || 'Unknown'}</h3>
               <p className="text-[var(--color-text-secondary)]">{job.postedBy?.email || 'No email provided'}</p>
-              <span className="inline-block mt-1 px-2 py-1 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-full text-xs font-medium">
-                {job.postedBy?.role || 'Unknown role'}
-              </span>
+     
             </div>
           </div>
           
