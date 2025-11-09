@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createJob, updateCompanyLogo } from '../../utils/Api';
+import { createJob, uploadFileHoster } from '../../utils/Api';
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
 import { Image as ImageIcon, Upload, Edit3 } from 'lucide-react';
@@ -111,7 +111,7 @@ const PostJob = () => {
     formData.append('companyLogo', logoFile);
     
     try {
-      const response = await updateCompanyLogo(formData);
+      const response = await uploadFileHoster(formData);
       if (response.data.success && response.data.data.profile?.companyLogo) {
         return response.data.data.profile.companyLogo;
       }

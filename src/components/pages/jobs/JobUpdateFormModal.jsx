@@ -109,9 +109,9 @@ const JobUpdateFormModal = ({ job, onClose, onSuccess }) => {
     formData.append('companyLogo', logoFile);
     
     try {
-      const response = await updateCompanyLogo(formData);
-      if (response.data.success && response.data.data.profile?.companyLogo) {
-        return response.data.data.profile.companyLogo;
+      const response = await updateCompanyLogo(job._id, formData);
+      if (response.data.success && response.data.data.company?.logo) {
+        return response.data.data.company.logo;
       }
       return null;
     } catch (error) {

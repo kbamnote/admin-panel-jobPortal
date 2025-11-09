@@ -60,13 +60,13 @@ export const getAllApplicants = () => Api.get('/admin/applicants');
 
 // ============== Uploading companyLogo ==============
 export const uploadFileHoster = (formData) =>
-  Api.post("/auth/profile/upload-multiple", formData, {
+  Api.post("/auth/upload-multiple", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
 // ============== Updating Company logo ==============
-export const updateCompanyLogo = (formData) =>
-  Api.put("/auth/profile/company-logo", formData, {
+export const updateCompanyLogo = (jobId, formData) =>
+  Api.put(`/auth/job/${jobId}/company-logo`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
