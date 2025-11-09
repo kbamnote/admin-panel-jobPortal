@@ -425,7 +425,7 @@ const Jobs = () => {
                         <DollarSign className="h-4 w-4 mr-1" />
                         <span className="text-sm">
                           {job.salary?.min ? 
-                            `${(job.salary.min/100000).toFixed(1)}-${(job.salary.max/100000).toFixed(1)}L ${job.salary.currency}` : 
+                            `${job.salary.min}-${job.salary.max} ${job.salary.currency}` : 
                             'Not disclosed'}
                         </span>
                       </div>

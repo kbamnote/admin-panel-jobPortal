@@ -10,6 +10,7 @@ const JobUpdateFormModal = ({ job, onClose, onSuccess }) => {
     jobType: '',
     salary: { min: '', max: '', currency: 'INR' },
     experienceLevel: '',
+    minEducation: '',
     category: '',
     numberOfOpenings: '',
     noticePeriod: '',
@@ -41,6 +42,7 @@ const JobUpdateFormModal = ({ job, onClose, onSuccess }) => {
           currency: job.salary?.currency || 'INR'
         },
         experienceLevel: job.experienceLevel || '',
+        minEducation: job.minEducation || '',
         category: job.category || '',
         numberOfOpenings: job.numberOfOpenings || '',
         noticePeriod: job.noticePeriod || '',
@@ -187,13 +189,12 @@ const JobUpdateFormModal = ({ job, onClose, onSuccess }) => {
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-              Job Type *
+              Job Type
             </label>
             <select
               name="jobType"
               value={formData.jobType}
               onChange={handleInputChange}
-              required
               className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
             >
               <option value="">Select Job Type</option>
@@ -238,28 +239,42 @@ const JobUpdateFormModal = ({ job, onClose, onSuccess }) => {
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-              Salary Min (INR)
+              Salary Min
             </label>
             <input
-              type="number"
+              type="text"
               name="salary.min"
               value={formData.salary.min}
               onChange={handleInputChange}
-              placeholder="e.g., 500000"
+              placeholder="e.g., 500000, 5L, As per company standard"
               className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-              Salary Max (INR)
+              Salary Max
             </label>
             <input
-              type="number"
+              type="text"
               name="salary.max"
               value={formData.salary.max}
               onChange={handleInputChange}
-              placeholder="e.g., 1000000"
+              placeholder="e.g., 1000000, 10L, As per company standard"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+              Minimum Education
+            </label>
+            <input
+              type="text"
+              name="minEducation"
+              value={formData.minEducation}
+              onChange={handleInputChange}
+              placeholder="e.g., Bachelor's Degree, Master's Degree"
               className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
             />
           </div>

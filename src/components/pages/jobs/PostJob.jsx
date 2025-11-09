@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createJob, updateCompanyLogo } from '../../utils/Api';
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
-import { Image as ImageIcon, Upload } from 'lucide-react';
+import { Image as ImageIcon, Upload, Edit3 } from 'lucide-react';
 
 const PostJob = () => {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ const PostJob = () => {
     jobType: '',
     salary: { min: '', max: '', currency: 'INR' },
     experienceLevel: '',
+    minEducation: '',
     category: '',
     numberOfOpenings: '',
     noticePeriod: '',
@@ -35,6 +36,16 @@ const PostJob = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState('');
+  // State to track which fields are using custom input
+  const [customInputs, setCustomInputs] = useState({
+    jobType: false,
+    experienceLevel: false,
+    category: false,
+    noticePeriod: false,
+    workType: false,
+    interviewType: false,
+    shift: false
+  });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -63,6 +74,26 @@ const PostJob = () => {
         [name]: value
       }));
     }
+  };
+
+  const handleCustomInputChange = (fieldName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  };
+
+  const toggleCustomInput = (fieldName) => {
+    setCustomInputs(prev => ({
+      ...prev,
+      [fieldName]: !prev[fieldName]
+    }));
+    
+    // Clear the field value when toggling
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: ''
+    }));
   };
 
   const handleLogoChange = (e) => {
@@ -161,6 +192,7 @@ const PostJob = () => {
           jobType: '',
           salary: { min: '', max: '', currency: 'INR' },
           experienceLevel: '',
+          minEducation: '',
           category: '',
           numberOfOpenings: '',
           noticePeriod: '',
@@ -174,6 +206,15 @@ const PostJob = () => {
           skills: '',
           company: { name: '', description: '', website: '', logo: '' },
           applicationDeadline: ''
+        });
+        setCustomInputs({
+          jobType: false,
+          experienceLevel: false,
+          category: false,
+          noticePeriod: false,
+          workType: false,
+          interviewType: false,
+          shift: false
         });
         setLogoFile(null);
         setLogoPreview('');
@@ -215,19 +256,46 @@ const PostJob = () => {
 
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                Job Type *
+                Job Type
               </label>
-              <select
-                name="jobType"
-                value={formData.jobType}
-                onChange={handleInputChange}
-                required
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              >
-                <option value="">Select Job Type</option>
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-              </select>
+              {customInputs.jobType ? (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={formData.jobType}
+                    onChange={(e) => handleCustomInputChange('jobType', e.target.value)}
+                    placeholder="Enter custom job type"
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('jobType')}
+                    className="px-3 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-md hover:bg-[var(--color-dark-secondary)]"
+                  >
+                    Select
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <select
+                    name="jobType"
+                    value={formData.jobType}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  >
+                    <option value="">Select Job Type</option>
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('jobType')}
+                    className="px-3 py-2 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent)] hover:text-[var(--color-text-white)]"
+                  >
+                    <Edit3 className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
@@ -249,45 +317,87 @@ const PostJob = () => {
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 Experience Level
               </label>
-              <select
-                name="experienceLevel"
-                value={formData.experienceLevel}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              >
-                <option value="">Select Experience Level</option>
-                <option value="Fresher">Fresher</option>
-                <option value="0-1 year of experience">0-1 year of experience</option>
-                <option value="1-2 year of experience">1-2 year of experience</option>
-                <option value="2-4 year of experience">2-4 year of experience</option>
-                <option value="5+ year of experience">5+ year of experience</option>
-              </select>
+              {customInputs.experienceLevel ? (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={formData.experienceLevel}
+                    onChange={(e) => handleCustomInputChange('experienceLevel', e.target.value)}
+                    placeholder="Enter custom experience level"
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('experienceLevel')}
+                    className="px-3 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-md hover:bg-[var(--color-dark-secondary)]"
+                  >
+                    Select
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <select
+                    name="experienceLevel"
+                    value={formData.experienceLevel}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  >
+                    <option value="">Select Experience Level</option>
+                    <option value="Fresher">Fresher</option>
+                    <option value="0-1 year of experience">0-1 year of experience</option>
+                    <option value="1-2 year of experience">1-2 year of experience</option>
+                    <option value="2-4 year of experience">2-4 year of experience</option>
+                    <option value="5+ year of experience">5+ year of experience</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('experienceLevel')}
+                    className="px-3 py-2 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent)] hover:text-[var(--color-text-white)]"
+                  >
+                    <Edit3 className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                Salary Min (INR)
+                Salary Min
               </label>
               <input
-                type="number"
+                type="text"
                 name="salary.min"
                 value={formData.salary.min}
                 onChange={handleInputChange}
-                placeholder="e.g., 500000"
+                placeholder="e.g., 500000, 5L, As per company standard"
                 className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                Salary Max (INR)
+                Salary Max
               </label>
               <input
-                type="number"
+                type="text"
                 name="salary.max"
                 value={formData.salary.max}
                 onChange={handleInputChange}
-                placeholder="e.g., 1000000"
+                placeholder="e.g., 1000000, 10L, As per company standard"
+                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                Minimum Education
+              </label>
+              <input
+                type="text"
+                name="minEducation"
+                value={formData.minEducation}
+                onChange={handleInputChange}
+                placeholder="e.g., Bachelor's Degree, Master's Degree"
                 className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
               />
             </div>
@@ -296,23 +406,51 @@ const PostJob = () => {
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 Category
               </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              >
-                <option value="">Select Category</option>
-                <option value="IT & Networking">IT & Networking</option>
-                <option value="Sales & Marketing">Sales & Marketing</option>
-                <option value="Accounting">Accounting</option>
-                <option value="Data Science">Data Science</option>
-                <option value="Digital Marketing">Digital Marketing</option>
-                <option value="Human Resource">Human Resource</option>
-                <option value="Customer Service">Customer Service</option>
-                <option value="Project Manager">Project Manager</option>
-                <option value="Other">Other</option>
-              </select>
+              {customInputs.category ? (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => handleCustomInputChange('category', e.target.value)}
+                    placeholder="Enter custom category"
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('category')}
+                    className="px-3 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-md hover:bg-[var(--color-dark-secondary)]"
+                  >
+                    Select
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  >
+                    <option value="">Select Category</option>
+                    <option value="IT & Networking">IT & Networking</option>
+                    <option value="Sales & Marketing">Sales & Marketing</option>
+                    <option value="Accounting">Accounting</option>
+                    <option value="Data Science">Data Science</option>
+                    <option value="Digital Marketing">Digital Marketing</option>
+                    <option value="Human Resource">Human Resource</option>
+                    <option value="Customer Service">Customer Service</option>
+                    <option value="Project Manager">Project Manager</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('category')}
+                    className="px-3 py-2 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent)] hover:text-[var(--color-text-white)]"
+                  >
+                    <Edit3 className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
@@ -333,19 +471,47 @@ const PostJob = () => {
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 Notice Period
               </label>
-              <select
-                name="noticePeriod"
-                value={formData.noticePeriod}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              >
-                <option value="">Select Notice Period</option>
-                <option value="Immediate Joiner">Immediate Joiner</option>
-                <option value="Upto 1 week">Upto 1 week</option>
-                <option value="Upto 1 month">Upto 1 month</option>
-                <option value="Upto 2 month">Upto 2 month</option>
-                <option value="Any">Any</option>
-              </select>
+              {customInputs.noticePeriod ? (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={formData.noticePeriod}
+                    onChange={(e) => handleCustomInputChange('noticePeriod', e.target.value)}
+                    placeholder="Enter custom notice period"
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('noticePeriod')}
+                    className="px-3 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-md hover:bg-[var(--color-dark-secondary)]"
+                  >
+                    Select
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <select
+                    name="noticePeriod"
+                    value={formData.noticePeriod}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  >
+                    <option value="">Select Notice Period</option>
+                    <option value="Immediate Joiner">Immediate Joiner</option>
+                    <option value="Upto 1 week">Upto 1 week</option>
+                    <option value="Upto 1 month">Upto 1 month</option>
+                    <option value="Upto 2 month">Upto 2 month</option>
+                    <option value="Any">Any</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('noticePeriod')}
+                    className="px-3 py-2 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent)] hover:text-[var(--color-text-white)]"
+                  >
+                    <Edit3 className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
@@ -365,34 +531,90 @@ const PostJob = () => {
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 Work Type
               </label>
-              <select
-                name="workType"
-                value={formData.workType}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              >
-                <option value="">Select Work Type</option>
-                <option value="Remote">Remote</option>
-                <option value="On-site">On-site</option>
-                <option value="Hybrid">Hybrid</option>
-              </select>
+              {customInputs.workType ? (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={formData.workType}
+                    onChange={(e) => handleCustomInputChange('workType', e.target.value)}
+                    placeholder="Enter custom work type"
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('workType')}
+                    className="px-3 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-md hover:bg-[var(--color-dark-secondary)]"
+                  >
+                    Select
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <select
+                    name="workType"
+                    value={formData.workType}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  >
+                    <option value="">Select Work Type</option>
+                    <option value="Remote">Remote</option>
+                    <option value="On-site">On-site</option>
+                    <option value="Hybrid">Hybrid</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('workType')}
+                    className="px-3 py-2 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent)] hover:text-[var(--color-text-white)]"
+                  >
+                    <Edit3 className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 Interview Type
               </label>
-              <select
-                name="interviewType"
-                value={formData.interviewType}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              >
-                <option value="">Select Interview Type</option>
-                <option value="Online">Online</option>
-                <option value="On-site">On-site</option>
-                <option value="Walk-in">Walk-in</option>
-              </select>
+              {customInputs.interviewType ? (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={formData.interviewType}
+                    onChange={(e) => handleCustomInputChange('interviewType', e.target.value)}
+                    placeholder="Enter custom interview type"
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('interviewType')}
+                    className="px-3 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-md hover:bg-[var(--color-dark-secondary)]"
+                  >
+                    Select
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <select
+                    name="interviewType"
+                    value={formData.interviewType}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  >
+                    <option value="">Select Interview Type</option>
+                    <option value="Online">Online</option>
+                    <option value="On-site">On-site</option>
+                    <option value="Walk-in">Walk-in</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('interviewType')}
+                    className="px-3 py-2 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent)] hover:text-[var(--color-text-white)]"
+                  >
+                    <Edit3 className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Conditional fields for Walk-in interview type */}
@@ -432,16 +654,44 @@ const PostJob = () => {
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 Shift
               </label>
-              <select
-                name="shift"
-                value={formData.shift}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              >
-                <option value="">Select Shift</option>
-                <option value="Day">Day</option>
-                <option value="Night">Night</option>
-              </select>
+              {customInputs.shift ? (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={formData.shift}
+                    onChange={(e) => handleCustomInputChange('shift', e.target.value)}
+                    placeholder="Enter custom shift"
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('shift')}
+                    className="px-3 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-md hover:bg-[var(--color-dark-secondary)]"
+                  >
+                    Select
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <select
+                    name="shift"
+                    value={formData.shift}
+                    onChange={handleInputChange}
+                    className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+                  >
+                    <option value="">Select Shift</option>
+                    <option value="Day">Day</option>
+                    <option value="Night">Night</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => toggleCustomInput('shift')}
+                    className="px-3 py-2 bg-[var(--color-accent-light)] text-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent)] hover:text-[var(--color-text-white)]"
+                  >
+                    <Edit3 className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
