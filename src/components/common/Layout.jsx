@@ -6,9 +6,9 @@ const Layout = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-[var(--color-background)]">
       <Sidebar />
-      <div className="flex-1 flex flex-col ml-64"> {/* Adjust margin based on sidebar width */}
+      <div className="flex-1 flex flex-col ml-64">
         <Header />
-        <main className="flex-1 p-6 mt-20"> {/* Add top margin to account for fixed header */}
+        <main className="flex-1 p-6 mt-20">
           {children}
         </main>
       </div>

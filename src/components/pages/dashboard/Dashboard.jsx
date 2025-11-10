@@ -494,160 +494,183 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {userStatsLoading ? (
-          <div className="animate-pulse h-64 flex items-center justify-center">
-            <div className="text-[var(--color-text-muted)]">Loading statistics...</div>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
-                <p className="text-sm text-[var(--color-text-secondary)]">Job Seekers</p>
-                <p className="text-2xl font-bold text-[var(--color-primary)]">
-                  {userStats.roleStats?.jobSeeker || 0}
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
-                <p className="text-sm text-[var(--color-text-secondary)]">Job Hosters</p>
-                <p className="text-2xl font-bold text-[#10b981]">
-                  {userStats.roleStats?.jobHoster || 0}
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
-                <p className="text-sm text-[var(--color-text-secondary)]">Recruiters</p>
-                <p className="text-2xl font-bold text-[#8b5cf6]">
-                  {userStats.roleStats?.recruiter || 0}
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
-                <p className="text-sm text-[var(--color-text-secondary)]">Elite Team</p>
-                <p className="text-2xl font-bold text-[#f59e0b]">
-                  {userStats.roleStats?.eliteTeam || 0}
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-[var(--color-border)]">
-                <p className="text-sm text-[var(--color-text-secondary)]">Total Users</p>
-                <p className="text-2xl font-bold text-[#ef4444]">
-                  {userStats.overallStats?.totalUsers || 0}
-                </p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-80">
-                <Line data={prepareChartData()} options={chartOptions} />
-              </div>
-              <div className="h-80 flex items-center justify-center">
-                {jobCategoriesLoading ? (
-                  <div className="text-[var(--color-text-muted)]">Loading categories...</div>
-                ) : (
-                  <Doughnut 
-                    data={prepareDoughnutChartData()} 
-                    options={doughnutChartOptions} 
-                  />
-                )}
-              </div>
-            </div>
-          </>
-        )}
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Line Chart */}
+        <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">
+            User Growth
+          </h2>
+          {userStatsLoading ? (
+            <div className="animate-pulse h-80 flex items-center justify-center">
+              <div className="text-[var(--color-text-muted)]">Loading chart...</div>
+            </div>
+          ) : (
+            <div className="h-80">
+              <Line 
+                data={prepareChartData()} 
+                options={chartOptions} 
+                className="w-full h-full"
+              />
+            </div>
+          )}
+        </div>
+        
+        {/* Doughnut Chart */}
+        <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">
+            Jobs by Category
+          </h2>
+          {jobCategoriesLoading ? (
+            <div className="animate-pulse h-80 flex items-center justify-center">
+              <div className="text-[var(--color-text-muted)]">Loading chart...</div>
+            </div>
+          ) : jobCategories.length > 0 ? (
+            <div className="h-80">
+              <Doughnut 
+                data={prepareDoughnutChartData()} 
+                options={doughnutChartOptions} 
+                className="w-full h-full"
+              />
+            </div>
+          ) : (
+            <div className="h-80 flex items-center justify-center">
+              <div className="text-center text-[var(--color-text-muted)]">
+                <div className="text-4xl mb-2">📊</div>
+                <p>No job category data available</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Recent Activity Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Jobs */}
         <div className="bg-[var(--color-background-light)] rounded-xl p-6">
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-6 flex items-center">
-            <Briefcase className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
-            Recent Jobs
-          </h2>
-          {recentJobs.length === 0 ? (
-            <p className="text-[var(--color-text-muted)] text-center py-4">No jobs found</p>
-          ) : (
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
+              Recent Jobs
+            </h2>
+            <button 
+              onClick={() => navigate('/jobs')}
+              className="text-sm text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] font-medium"
+            >
+              View All
+            </button>
+          </div>
+          
+          {recentJobs.length > 0 ? (
             <div className="space-y-4">
               {recentJobs.map((job) => (
                 <div 
                   key={job._id} 
-                  className="bg-[var(--color-white)] p-4 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-primary)] cursor-pointer transition-colors"
-                  onClick={() => handleJobClick(job._id)}
+                  className="flex items-center justify-between p-4 bg-[var(--color-white)] rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/jobs/${job._id}`)}
                 >
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold text-[var(--color-text-primary)]">{job.title}</h3>
-                    {/* Show verification status instead of active/inactive */}
-                    <div className="flex items-center">
-                      {job.verificationStatus === 'verified' ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                          <Check className="h-3 w-3 mr-1" />
-                          Verified
-                        </span>
-                      ) : job.verificationStatus === 'not verified' ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                          <X className="h-3 w-3 mr-1" />
-                          Not Verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          Pending
-                        </span>
-                      )}
+                  <div className="flex items-center">
+                    {job.company?.logo ? (
+                      <img 
+                        src={job.company.logo} 
+                        alt={job.company.name} 
+                        className="w-10 h-10 object-contain rounded-md mr-3 border border-[var(--color-border)]"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-md mr-3 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
+                        <Building className="h-5 w-5 text-[var(--color-text-muted)]" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-medium text-[var(--color-text-primary)]">
+                        {job.title}
+                      </h3>
+                      <p className="text-[var(--color-text-muted)] text-sm">
+                        {job.company?.name}
+                      </p>
                     </div>
                   </div>
-                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">{job.company?.name}</p>
-                  <div className="flex justify-between items-center mt-3">
-                    <span className="text-xs text-[var(--color-text-muted)]">
-                      Posted: {formatDate(job.createdAt)}
-                    </span>
-                    <span className="text-xs bg-[var(--color-accent-light)] text-[var(--color-accent)] px-2 py-1 rounded">
-                      {job.jobType}
+                  <div className="text-right">
+                    <p className="text-[var(--color-text-muted)] text-sm">
+                      {formatDate(job.createdAt)}
+                    </p>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      job.verificationStatus === 'verified' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {job.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
                     </span>
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-[var(--color-text-light)] text-4xl mb-2">📋</div>
+              <p className="text-[var(--color-text-muted)]">No recent jobs found</p>
             </div>
           )}
         </div>
         
         {/* Recent Applicants */}
         <div className="bg-[var(--color-background-light)] rounded-xl p-6">
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-6 flex items-center">
-            <Users className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
-            Recent Applicants
-          </h2>
-          {recentApplicants.length === 0 ? (
-            <p className="text-[var(--color-text-muted)] text-center py-4">No applicants found</p>
-          ) : (
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
+              Recent Applicants
+            </h2>
+            <button 
+              onClick={() => navigate('/applicants')}
+              className="text-sm text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] font-medium"
+            >
+              View All
+            </button>
+          </div>
+          
+          {recentApplicants.length > 0 ? (
             <div className="space-y-4">
               {recentApplicants.map((applicant) => (
                 <div 
                   key={applicant._id} 
-                  className="bg-[var(--color-white)] p-4 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-primary)] cursor-pointer transition-colors"
-                  onClick={() => handleApplicantClick(applicant._id)}
+                  className="flex items-center p-4 bg-[var(--color-white)] rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/applicants/${applicant._id}`)}
                 >
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold text-[var(--color-text-primary)]">{applicant.name}</h3>
+                  {applicant.profile?.photo ? (
+                    <img 
+                      src={applicant.profile.photo} 
+                      alt={applicant.name} 
+                      className="w-10 h-10 object-cover rounded-full mr-3 border border-[var(--color-border)]"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full mr-3 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
+                      <Users2 className="h-5 w-5 text-[var(--color-text-muted)]" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-[var(--color-text-primary)] truncate">
+                      {applicant.name}
+                    </h3>
+                    <p className="text-[var(--color-text-muted)] text-sm truncate">
+                      {applicant.email}
+                    </p>
                   </div>
-                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">{applicant.email}</p>
-                  <div className="flex justify-between items-center mt-3">
-                    <span className="text-xs text-[var(--color-text-muted)]">
-                      Joined: {formatDate(applicant.createdAt)}
-                    </span>
-                    {applicant.profile?.designation && (
-                      <span className="text-xs bg-[var(--color-accent-light)] text-[var(--color-accent)] px-2 py-1 rounded">
-                        {applicant.profile.designation}
-                      </span>
-                    )}
+                  <div className="text-right">
+                    <p className="text-[var(--color-text-muted)] text-sm">
+                      {formatDate(applicant.createdAt)}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-[var(--color-text-light)] text-4xl mb-2">👥</div>
+              <p className="text-[var(--color-text-muted)]">No recent applicants found</p>
+            </div>
           )}
         </div>
       </div>
-      
-      {userRole === 'admin' && (
-        <div className="mt-8 text-center text-sm text-[var(--color-text-muted)]">
-          <p>Welcome back, Administrator. You have full access to all system features.</p>
-        </div>
-      )}
     </div>
   );
 };

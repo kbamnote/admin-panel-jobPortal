@@ -501,37 +501,25 @@ const Jobs = () => {
           )}
         </>
       )}
-
-      {/* Success Modal */}
+      
+      {/* Modals */}
       <SuccessModal 
         isOpen={isSuccessModalOpen} 
         onClose={() => setIsSuccessModalOpen(false)} 
-        title="Success" 
         message={successMessage} 
       />
-
-      {/* Error Modal */}
       <ErrorModal 
         isOpen={isErrorModalOpen} 
         onClose={() => setIsErrorModalOpen(false)} 
-        title="Error" 
         message={errorMessage} 
       />
-
-      {/* Delete Confirmation Modal - only show for admin */}
-      {userRole === 'admin' && (
-        <DeleteConfirmationModal 
-          isOpen={isDeleteModalOpen} 
-          onClose={() => {
-            setIsDeleteModalOpen(false);
-            setJobToDelete(null);
-          }} 
-          onConfirm={handleDeleteJob} 
-          title="Confirm Deletion" 
-          message={`Are you sure you want to delete the job "${jobToDelete?.title}"? This action cannot be undone.`} 
-          isLoading={isDeleting}
-        />
-      )}
+      <DeleteConfirmationModal 
+        isOpen={isDeleteModalOpen} 
+        onClose={() => setIsDeleteModalOpen(false)} 
+        onConfirm={handleDeleteJob} 
+        itemName={jobToDelete?.title || 'this job'} 
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };
