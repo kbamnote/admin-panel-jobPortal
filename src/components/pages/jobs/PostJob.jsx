@@ -18,6 +18,7 @@ const PostJob = () => {
     category: '',
     numberOfOpenings: '',
     noticePeriod: '',
+    yearOfPassing: '',
     workType: '',
     interviewType: '',
     walkInDate: '',
@@ -27,7 +28,8 @@ const PostJob = () => {
     responsibilities: '',
     skills: '',
     company: { name: '', description: '', website: '', logo: '' },
-    applicationDeadline: ''
+    applicationDeadline: '',
+    directLink: ''
   });
   const [loading, setLoading] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -196,6 +198,7 @@ const PostJob = () => {
           category: '',
           numberOfOpenings: '',
           noticePeriod: '',
+          yearOfPassing: '',
           workType: '',
           interviewType: '',
           walkInDate: '',
@@ -205,7 +208,8 @@ const PostJob = () => {
           responsibilities: '',
           skills: '',
           company: { name: '', description: '', website: '', logo: '' },
-          applicationDeadline: ''
+          applicationDeadline: '',
+          directLink: ''
         });
         setCustomInputs({
           jobType: false,
@@ -516,6 +520,20 @@ const PostJob = () => {
 
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                Year of Passing
+              </label>
+              <input
+                type="text"
+                name="yearOfPassing"
+                value={formData.yearOfPassing}
+                onChange={handleInputChange}
+                placeholder="e.g., 2023/2024 or 2023-2024"
+                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 Application Deadline
               </label>
               <input
@@ -523,6 +541,20 @@ const PostJob = () => {
                 name="applicationDeadline"
                 value={formData.applicationDeadline}
                 onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                Direct Link
+              </label>
+              <input
+                type="text"
+                name="directLink"
+                value={formData.directLink}
+                onChange={handleInputChange}
+                placeholder="e.g., https://company.com/careers/position"
                 className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
               />
             </div>

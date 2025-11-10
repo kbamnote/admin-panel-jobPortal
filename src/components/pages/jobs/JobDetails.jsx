@@ -375,6 +375,10 @@ const JobDetails = () => {
               <div className="text-xs text-[var(--color-text-muted)] mb-1">Year of Passing</div>
               <div className="font-medium">{job.yearOfPassing || 'Not specified'}</div>
             </div>
+            <div className="bg-[var(--color-white)] p-3 rounded-lg">
+              <div className="text-xs text-[var(--color-text-muted)] mb-1">Direct Link</div>
+              <div className="font-medium">{job.directLink || 'Not specified'}</div>
+            </div>
           </div>
         </div>
       </div>
