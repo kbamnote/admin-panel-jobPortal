@@ -403,7 +403,11 @@ const ApplicantsDetails = () => {
           {applications.length > 0 ? (
             <div className="space-y-4">
               {applications.map((application) => (
-                <div key={application._id} className="border border-[var(--color-border)] rounded-lg p-4">
+                <div 
+                  key={application._id} 
+                  className="border border-[var(--color-border)] rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/jobs/${application.jobId?._id}`)}
+                >
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-bold text-[var(--color-text-primary)]">{application.jobId?.title || 'Job Title'}</h3>

@@ -1,8 +1,10 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Menu } from 'lucide-react';
 
-const Header = () => {
+const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Function to get page title based on current route
   const getPageTitle = () => {
@@ -68,10 +70,56 @@ const Header = () => {
     });
   };
 
+  // Function to determine if we should show back button
+  const shouldShowBackButton = () => {
+    // Show back button for detail pages and nested routes
+    return location.pathname.includes('/jobs/') || 
+           location.pathname.includes('/applicants/') ||
+           location.pathname.includes('/team/');
+  };
+
+  // Function to determine back button destination
+  const getBackButtonDestination = () => {
+    if (location.pathname.startsWith('/jobs/') && location.pathname.endsWith('/applicants')) {
+      // From job applicants back to job details
+      const jobId = location.pathname.split('/')[2];
+      return `/jobs/${jobId}`;
+    } else if (location.pathname.startsWith('/jobs/') && !location.pathname.endsWith('/applicants')) {
+      // From job details back to jobs list
+      return '/jobs';
+    } else if (location.pathname.startsWith('/applicants/')) {
+      // From applicant details back to applicants list
+      return '/applicants';
+    } else if (location.pathname.startsWith('/team/posted-jobs')) {
+      // From team posted jobs back to team
+      return '/team';
+    }
+    // Default back to dashboard
+    return '/dashboard';
+  };
+
   return (
-    <header className="fixed top-0 right-0 left-64 bg-[var(--color-white)] shadow z-10"> {/* Make header fixed */}
+    <header className="fixed top-0 right-0 left-0 md:left-64 bg-[var(--color-white)] shadow z-10"> {/* Make header fixed */}
       <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{getPageTitle()}</h1>
+        <div className="flex items-center">
+          <button
+            className="md:hidden mr-4 p-2 rounded-lg hover:bg-[var(--color-background-light)] transition-colors"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="h-5 w-5 text-[var(--color-text-primary)]" />
+          </button>
+          {shouldShowBackButton() && (
+            <button
+              onClick={() => navigate(getBackButtonDestination())}
+              className="mr-4 p-2 rounded-lg hover:bg-[var(--color-background-light)] transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-5 w-5 text-[var(--color-text-primary)]" />
+            </button>
+          )}
+          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{getPageTitle()}</h1>
+        </div>
         <div className="text-sm font-medium text-[var(--color-text-muted)]">
           {getCurrentDate()}
         </div>

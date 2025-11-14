@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAllApplicants, deleteAccount } from '../../utils/Api';
 import { User, Mail, Calendar, Briefcase, Building, FileText, Trash2 } from 'lucide-react';
 import SuccessModal from '../../common/modal/SuccessModal';
@@ -6,6 +7,7 @@ import ErrorModal from '../../common/modal/ErrorModal';
 import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
 
 const AllRoleDetails = () => {
+  const navigate = useNavigate();
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -153,57 +155,59 @@ const AllRoleDetails = () => {
     const postedJobs = user.role !== 'jobSeeker' ? selectedUser.postedJobs || [] : [];
     
     return (
-      <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
-        <div className="flex items-center mb-6">
-          <button 
-            onClick={() => setSelectedUser(null)}
-            className="flex items-center text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] mr-4"
-          >
-            <span className="text-lg font-medium">←</span>
-            <span className="ml-1">Back to All Users</span>
-          </button>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">User Details</h1>
+      <div className="bg-[var(--color-white)] p-4 rounded-xl shadow-lg sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div className="flex items-center">
+            <button 
+              onClick={() => setSelectedUser(null)}
+              className="flex items-center text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] mr-4"
+            >
+              <span className="text-lg font-medium">←</span>
+              <span className="ml-1">Back to All Users</span>
+            </button>
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">User Details</h1>
+          </div>
           <button
             onClick={() => handleDeleteClick(selectedUser)}
-            className="ml-auto flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] rounded-lg hover:bg-[#dc2626] transition-colors"
+            className="flex items-center px-4 py-2 bg-[var(--color-error)] text-[var(--color-text-white)] rounded-lg hover:bg-[#dc2626] transition-colors self-start sm:self-auto"
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete User
           </button>
         </div>
         
-        <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-dark-secondary)] rounded-xl p-6 mb-8 text-white">
+        <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-dark-secondary)] rounded-xl p-4 mb-6 text-white sm:p-6">
           <div className="flex flex-col md:flex-row md:items-start">
             {profile.photo ? (
               <img 
                 src={profile.photo} 
                 alt={user.name} 
-                className="w-24 h-24 object-cover rounded-full mr-6 mb-4 md:mb-0 border-4 border-white shadow-lg"
+                className="w-24 h-24 object-cover rounded-full mr-0 mb-4 md:mr-6 md:mb-0 border-4 border-white shadow-lg mx-auto md:mx-0"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center mr-6 mb-4 md:mb-0 border-4 border-white shadow-lg">
+              <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center mr-0 mb-4 md:mr-6 md:mb-0 border-4 border-white shadow-lg mx-auto md:mx-0">
                 <span className="text-3xl font-bold text-[var(--color-primary)]">
                   {user.name?.charAt(0) || 'U'}
                 </span>
               </div>
             )}
-            <div className="flex-1">
-              <h2 className="text-3xl font-bold mb-2 text-white">
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-2xl font-bold mb-2 text-white sm:text-3xl">
                 {user.name || 'Unknown User'}
               </h2>
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-3">
                 {getUserRoleBadge(user.role)}
                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-white bg-opacity-20 text-[#E94560]">
                   Joined {formatDate(user.createdAt)}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 justify-center md:justify-start">
+                <div className="flex items-center justify-center sm:justify-start">
                   <Mail className="h-5 w-5 mr-2" />
                   <span>{user.email || 'No email provided'}</span>
                 </div>
                 {profile.phone && (
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-center sm:justify-start">
                     <span className="font-medium">{profile.phone}</span>
                   </div>
                 )}
@@ -212,12 +216,12 @@ const AllRoleDetails = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             {/* Profile Information */}
-            <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
+            <div className="bg-[var(--color-background-light)] rounded-xl p-4 mb-6 sm:p-6">
               <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Profile Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {profile.companyName && (
                   <div className="bg-[var(--color-white)] p-4 rounded-lg">
                     <p className="text-sm text-[var(--color-text-muted)] mb-1">Company Name</p>
@@ -281,7 +285,7 @@ const AllRoleDetails = () => {
                   </div>
                 )}
                 {profile.address && (
-                  <div className="bg-[var(--color-white)] p-4 rounded-lg md:col-span-2">
+                  <div className="bg-[var(--color-white)] p-4 rounded-lg sm:col-span-2">
                     <p className="text-sm text-[var(--color-text-muted)] mb-1">Address</p>
                     <p className="font-medium">{profile.address}</p>
                   </div>
@@ -333,12 +337,16 @@ const AllRoleDetails = () => {
             
             {/* Applications (only for jobSeeker) */}
             {user.role === 'jobSeeker' && (
-              <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+              <div className="bg-[var(--color-background-light)] rounded-xl p-4 sm:p-6">
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Applications ({applications.length})</h3>
                 {applications.length > 0 ? (
                   <div className="space-y-4">
                     {applications.map((application) => (
-                      <div key={application._id} className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)]">
+                      <div 
+                        key={application._id} 
+                        className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)] hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigate(`/jobs/${application.jobId?._id}`)}
+                      >
                         <div className="flex justify-between items-start mb-3">
                           <h4 className="font-bold text-[var(--color-text-primary)]">{application.jobId?.title || 'Unknown Job'}</h4>
                           {getApplicationStatusBadge(application.status)}
@@ -393,12 +401,16 @@ const AllRoleDetails = () => {
             
             {/* Posted Jobs (for non-jobSeeker roles) */}
             {user.role !== 'jobSeeker' && (
-              <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+              <div className="bg-[var(--color-background-light)] rounded-xl p-4 sm:p-6">
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Posted Jobs ({postedJobs.length})</h3>
                 {postedJobs.length > 0 ? (
                   <div className="space-y-4">
                     {postedJobs.map((job) => (
-                      <div key={job._id} className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)]">
+                      <div 
+                        key={job._id} 
+                        className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)] hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigate(`/jobs/${job._id}`)}
+                      >
                         <div className="flex justify-between items-start mb-3">
                           <h4 className="font-bold text-[var(--color-text-primary)]">{job.title || 'Unknown Job'}</h4>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -453,7 +465,7 @@ const AllRoleDetails = () => {
           <div>
             {/* Skills */}
             {profile.skills && profile.skills.length > 0 && (
-              <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
+              <div className="bg-[var(--color-background-light)] rounded-xl p-4 mb-6 sm:p-6">
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Skills</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.skills.map((skill, index) => (
@@ -470,7 +482,7 @@ const AllRoleDetails = () => {
             
             {/* Social Links */}
             {(profile.githubUrl || profile.linkedinUrl) && (
-              <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
+              <div className="bg-[var(--color-background-light)] rounded-xl p-4 mb-6 sm:p-6">
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Social Links</h3>
                 <div className="space-y-3">
                   {profile.githubUrl && (
@@ -505,7 +517,7 @@ const AllRoleDetails = () => {
             
             {/* Education */}
             {profile.education && profile.education.length > 0 && (
-              <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
+              <div className="bg-[var(--color-background-light)] rounded-xl p-4 mb-6 sm:p-6">
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Education</h3>
                 <div className="space-y-4">
                   {profile.education.map((edu, index) => (
@@ -524,7 +536,7 @@ const AllRoleDetails = () => {
             
             {/* Experience */}
             {profile.experience && profile.experience.length > 0 && (
-              <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+              <div className="bg-[var(--color-background-light)] rounded-xl p-4 sm:p-6">
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Work Experience</h3>
                 <div className="space-y-4">
                   {profile.experience.map((exp, index) => (
@@ -547,7 +559,7 @@ const AllRoleDetails = () => {
   }
 
   return (
-    <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
+    <div className="bg-[var(--color-white)] p-4 rounded-xl shadow-lg sm:p-6">
       <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6">All Role Details ({applicants.length})</h1>
       
       {applicants.length === 0 ? (
@@ -557,7 +569,7 @@ const AllRoleDetails = () => {
           <p className="text-[var(--color-text-muted)]">There are no users in the system yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {applicants.map((applicant) => {
             const user = applicant.user;
             const profile = user.profile || {};
@@ -565,7 +577,7 @@ const AllRoleDetails = () => {
             return (
               <div 
                 key={user._id} 
-                className="border border-[var(--color-border)] rounded-xl p-5 hover:shadow-lg transition-all cursor-pointer bg-[var(--color-background-light)] hover:bg-[var(--color-white)] relative"
+                className="border border-[var(--color-border)] rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer bg-[var(--color-background-light)] hover:bg-[var(--color-white)] relative sm:p-5"
                 onClick={() => setSelectedUser(applicant)}
               >
                 <button
