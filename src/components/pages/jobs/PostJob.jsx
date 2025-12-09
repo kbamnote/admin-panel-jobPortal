@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createJob, uploadFileHoster } from '../../utils/Api';
+import { createJob, uploadFileHoster, getJobCategories } from '../../utils/Api';
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
 import { Image as ImageIcon, Upload, Edit3 } from 'lucide-react';
@@ -48,6 +48,44 @@ const PostJob = () => {
     interviewType: false,
     shift: false
   });
+  // State for dynamic categories
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const response = await getJobCategories();
+        if (response.data.success) {
+          // Extract just the category names from the response and sort them alphabetically
+          const categories = response.data.data
+            .map(item => item.category)
+            .sort((a, b) => a.localeCompare(b));
+          setCategoryOptions(categories);
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+        // Fallback to hardcoded options if API fails, sorted alphabetically
+        setCategoryOptions([
+          "Accounting", 
+          "Customer Service", 
+          "Data Science", 
+          "Digital Marketing", 
+          "Human Resource", 
+          "IT & Networking", 
+          "Project Manager", 
+          "Sales & Marketing",
+          "Other"
+        ]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -436,15 +474,15 @@ const PostJob = () => {
                     className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
                   >
                     <option value="">Select Category</option>
-                    <option value="IT & Networking">IT & Networking</option>
-                    <option value="Sales & Marketing">Sales & Marketing</option>
-                    <option value="Accounting">Accounting</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="Digital Marketing">Digital Marketing</option>
-                    <option value="Human Resource">Human Resource</option>
-                    <option value="Customer Service">Customer Service</option>
-                    <option value="Project Manager">Project Manager</option>
-                    <option value="Other">Other</option>
+                    {categoriesLoading ? (
+                      <option value="" disabled>Loading...</option>
+                    ) : (
+                      categoryOptions.map((category, index) => (
+                        <option key={index} value={category}>
+                          {category}
+                        </option>
+                      ))
+                    )}
                   </select>
                   <button
                     type="button"

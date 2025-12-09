@@ -43,7 +43,36 @@ export const login = (post) => {
 };
 
 // ============== All Jobs GET ==============
-export const allJobs = (page = 1, limit = 10) => Api.get(`/jobs?page=${page}&limit=${limit}`);
+export const allJobs = (page = 1, limit = 10, search = '', category = '', verificationStatus = '', postedBy = '') => {
+  const params = new URLSearchParams();
+  params.append('page', page);
+  params.append('limit', limit);
+  
+  if (search) {
+    params.append('search', search);
+  }
+  
+  if (category && category !== 'all') {
+    params.append('category', category);
+  }
+  
+  if (verificationStatus && verificationStatus !== 'all') {
+    params.append('verificationStatus', verificationStatus);
+  }
+  
+  // Handle postedBy parameter for filtering by admin or team member
+  if (postedBy) {
+    if (postedBy === 'admin') {
+      params.append('postedByAdmin', 'true');
+    } else {
+      // Assume it's a team member ID
+      params.append('postedBy', postedBy);
+    }
+  }
+  
+  return Api.get(`/jobs?${params.toString()}`);
+};
+
 export const jobsById = (id) => Api.get(`/jobs/${id}`);
 export const jobsByTeamMember = (teamMemberId, page = 1, limit = 10) => Api.get(`/admin/jobs?postedBy=${teamMemberId}&page=${page}&limit=${limit}`);
 export const adminPostedJobs = (page = 1, limit = 10) => Api.get(`/admin/jobs?postedByAdmin=true&page=${page}&limit=${limit}`);
@@ -92,3 +121,6 @@ export const getJobCategories = () => Api.get('/jobs/categories');
 export const getJobsByVerificationStatus = (status, page = 1, limit = 10) => Api.get(`/jobs?verificationStatus=${encodeURIComponent(status)}&page=${page}&limit=${limit}`);
 export const updateJobVerificationStatus = (id, status) => Api.patch(`/jobs/${id}/verification`, { verificationStatus: status });
 export const getJobVerificationCounts = () => Api.get('/jobs/verification-counts');
+
+// ============== Team Member Stats ==============
+export const getTeamMemberStats = () => Api.get('/jobs/team-stats');

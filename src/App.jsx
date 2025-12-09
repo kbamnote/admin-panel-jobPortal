@@ -27,8 +27,8 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   
   // If allowedRoles is specified and userRole is not in allowedRoles, redirect to appropriate page
   if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-    // Redirect eliteTeam members to jobs page
-    if (userRole === 'eliteTeam') {
+    // Redirect eliteTeam members to jobs page ONLY if dashboard is not allowed
+    if (userRole === 'eliteTeam' && !allowedRoles.includes('eliteTeam')) {
       return <Navigate to="/jobs" replace />;
     }
     // For other roles, redirect to dashboard
@@ -77,7 +77,7 @@ function App() {
           <Route 
             path="/dashboard" 
             element={
-              <ProtectedRoute allowedRoles={['admin', 'recruiter', 'jobHoster']}>
+              <ProtectedRoute allowedRoles={['admin', 'recruiter', 'jobHoster', 'eliteTeam']}>
                 <Layout>
                   <Dashboard />
                 </Layout>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails, getJobsByVerificationStatus } from '../../utils/Api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails, getJobsByVerificationStatus, getJobCategories } from '../../utils/Api';
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
 import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
@@ -21,31 +21,59 @@ const Jobs = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [jobCategories, setJobCategories] = useState([]);
   const [filterType, setFilterType] = useState('all'); // 'all', 'admin', 'teamMember'
   const [selectedTeamMember, setSelectedTeamMember] = useState('');
   const [verificationStatus, setVerificationStatus] = useState('all'); // 'all', 'verified', 'not verified'
+  const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' or specific category
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
   const [limit] = useState(10); // Items per page
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    // Only fetch team members for admin role, not for eliteTeam
-    if (userRole === 'admin') {
-      const fetchTeamMembers = async () => {
-        try {
-          const response = await getTeamDetails();
-          if (response.data.success) {
-            setTeamMembers(response.data.data);
-          }
-        } catch (err) {
-          console.error('Error fetching team members:', err);
+    // Fetch team members for both admin and eliteTeam roles
+    const fetchTeamMembers = async () => {
+      try {
+        const response = await getTeamDetails();
+        if (response.data.success) {
+          setTeamMembers(response.data.data);
         }
-      };
+      } catch (err) {
+        console.error('Error fetching team members:', err);
+      }
+    };
 
-      fetchTeamMembers();
-    }
-  }, [userRole]);
+    fetchTeamMembers();
+    
+    // Fetch job categories
+    const fetchJobCategories = async () => {
+      try {
+        const response = await getJobCategories();
+        if (response.data.success) {
+          setJobCategories(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching job categories:', err);
+      }
+    };
+    
+    fetchJobCategories();
+    
+    // Initialize state from URL parameters
+    const filterTypeParam = searchParams.get('filterType') || 'all';
+    const selectedTeamMemberParam = searchParams.get('selectedTeamMember') || '';
+    const verificationStatusParam = searchParams.get('verificationStatus') || 'all';
+    const selectedCategoryParam = searchParams.get('selectedCategory') || 'all';
+    const pageParam = parseInt(searchParams.get('page')) || 1;
+    
+    setFilterType(filterTypeParam);
+    setSelectedTeamMember(selectedTeamMemberParam);
+    setVerificationStatus(verificationStatusParam);
+    setSelectedCategory(selectedCategoryParam);
+    setCurrentPage(pageParam);
+  }, [userRole, searchParams]);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -53,33 +81,63 @@ const Jobs = () => {
         setLoading(true);
         let response;
         
-        // For eliteTeam role, show all jobs with verification status filtering
+        // For all roles, use the unified allJobs API that supports all filter combinations
         if (userRole === 'eliteTeam') {
-          if (verificationStatus === 'all') {
-            response = await allJobs(currentPage, limit);
-          } else {
-            response = await getJobsByVerificationStatus(verificationStatus, currentPage, limit);
-          }
+          // For eliteTeam, always use allJobs with filters
+          // Include team member filter if selected
+          response = await allJobs(
+            currentPage, 
+            limit, 
+            '', // search
+            selectedCategory !== 'all' ? selectedCategory : '', 
+            verificationStatus !== 'all' ? verificationStatus : '',
+            selectedTeamMember || '' // Pass team member ID if selected
+          );
         } else {
-          // Admin role can use filters
-          if (verificationStatus !== 'all') {
-            // Apply verification status filter to all job types
-            response = await getJobsByVerificationStatus(verificationStatus, currentPage, limit);
-          } else {
-            switch (filterType) {
-              case 'admin':
-                response = await adminPostedJobs(currentPage, limit);
-                break;
-              case 'teamMember':
-                if (selectedTeamMember) {
-                  response = await jobsByTeamMember(selectedTeamMember, currentPage, limit);
-                } else {
-                  response = await allJobs(currentPage, limit);
-                }
-                break;
-              default: // 'all'
-                response = await allJobs(currentPage, limit);
-            }
+          // Admin role logic
+          switch (filterType) {
+            case 'admin':
+              // For admin posted jobs with additional filters
+              response = await allJobs(
+                currentPage, 
+                limit, 
+                '', // search
+                selectedCategory !== 'all' ? selectedCategory : '', 
+                verificationStatus !== 'all' ? verificationStatus : '',
+                'admin' // Special parameter to indicate admin posted jobs
+              );
+              break;
+            case 'teamMember':
+              if (selectedTeamMember) {
+                // For team member jobs with additional filters
+                response = await allJobs(
+                  currentPage, 
+                  limit, 
+                  '', // search
+                  selectedCategory !== 'all' ? selectedCategory : '', 
+                  verificationStatus !== 'all' ? verificationStatus : '',
+                  selectedTeamMember // Pass team member ID
+                );
+              } else {
+                // All jobs with filters
+                response = await allJobs(
+                  currentPage, 
+                  limit, 
+                  '', // search
+                  selectedCategory !== 'all' ? selectedCategory : '', 
+                  verificationStatus !== 'all' ? verificationStatus : ''
+                );
+              }
+              break;
+            default: // 'all'
+              // All jobs with filters
+              response = await allJobs(
+                currentPage, 
+                limit, 
+                '', // search
+                selectedCategory !== 'all' ? selectedCategory : '', 
+                verificationStatus !== 'all' ? verificationStatus : ''
+              );
           }
         }
         
@@ -100,7 +158,7 @@ const Jobs = () => {
     };
 
     fetchJobs();
-  }, [filterType, selectedTeamMember, userRole, currentPage, limit, verificationStatus]);
+  }, [filterType, selectedTeamMember, userRole, currentPage, limit, verificationStatus, selectedCategory]);
 
   const handleViewDetails = (jobId) => {
     navigate(`/jobs/${jobId}`);
@@ -146,30 +204,58 @@ const Jobs = () => {
     });
   };
 
+  const updateUrlParams = (params) => {
+    const newParams = {};
+    if (params.filterType && params.filterType !== 'all') newParams.filterType = params.filterType;
+    if (params.selectedTeamMember) newParams.selectedTeamMember = params.selectedTeamMember;
+    if (params.verificationStatus && params.verificationStatus !== 'all') newParams.verificationStatus = params.verificationStatus;
+    if (params.selectedCategory && params.selectedCategory !== 'all') newParams.selectedCategory = params.selectedCategory;
+    if (params.page && params.page !== 1) newParams.page = params.page.toString();
+    
+    setSearchParams(newParams);
+  };
+
   const handleFilterChange = (e) => {
-    setFilterType(e.target.value);
-    if (e.target.value !== 'teamMember') {
+    const newFilterType = e.target.value;
+    setFilterType(newFilterType);
+    if (newFilterType !== 'teamMember') {
       setSelectedTeamMember('');
+      updateUrlParams({ filterType: newFilterType, selectedTeamMember: '', page: 1 });
+    } else {
+      updateUrlParams({ filterType: newFilterType, page: 1 });
     }
     // Reset to first page when filter changes
     setCurrentPage(1);
   };
 
   const handleTeamMemberChange = (e) => {
-    setSelectedTeamMember(e.target.value);
+    const newSelectedTeamMember = e.target.value;
+    setSelectedTeamMember(newSelectedTeamMember);
+    updateUrlParams({ selectedTeamMember: newSelectedTeamMember, page: 1 });
     // Reset to first page when team member changes
     setCurrentPage(1);
   };
 
   const handleVerificationStatusChange = (e) => {
-    setVerificationStatus(e.target.value);
+    const newVerificationStatus = e.target.value;
+    setVerificationStatus(newVerificationStatus);
+    updateUrlParams({ verificationStatus: newVerificationStatus, page: 1 });
     // Reset to first page when verification status changes
+    setCurrentPage(1);
+  };
+  
+  const handleCategoryChange = (e) => {
+    const newCategory = e.target.value;
+    setSelectedCategory(newCategory);
+    updateUrlParams({ selectedCategory: newCategory, page: 1 });
+    // Reset to first page when category changes
     setCurrentPage(1);
   };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
+      updateUrlParams({ page: newPage });
     }
   };
 
@@ -282,8 +368,12 @@ const Jobs = () => {
   }
 
   const getFilterTitle = () => {
-    // For eliteTeam role, always show "All Posted Jobs"
+    // For eliteTeam role, show appropriate title based on filters
     if (userRole === 'eliteTeam') {
+      if (selectedTeamMember) {
+        const member = teamMembers.find(m => m._id === selectedTeamMember);
+        return member ? `${member.name}'s Posted Jobs` : 'Team Member Jobs';
+      }
       return 'All Posted Jobs';
     }
     
@@ -307,6 +397,22 @@ const Jobs = () => {
         <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">{getFilterTitle()}</h2>
         {/* Show filter dropdowns for both admin and eliteTeam roles */}
         <div className="flex flex-col sm:flex-row gap-2">
+          {/* Category Filter - shown for both roles */}
+          <select 
+            value={selectedCategory}
+            onChange={handleCategoryChange}
+            className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          >
+            <option value="all">All Categories</option>
+            {jobCategories
+              .filter(category => category.count > 0)
+              .map(category => (
+                <option key={category.category} value={category.category}>
+                  {category.category} ({category.count})
+                </option>
+              ))}
+          </select>
+                      
           {/* Verification Status Filter - shown for both roles */}
           <select 
             value={verificationStatus}
@@ -317,7 +423,23 @@ const Jobs = () => {
             <option value="verified">Verified Jobs</option>
             <option value="not verified">Not Verified Jobs</option>
           </select>
-          
+                      
+          {/* Team Member Filter - shown for eliteTeam role */}
+          {userRole === 'eliteTeam' && (
+            <select 
+              value={selectedTeamMember}
+              onChange={handleTeamMemberChange}
+              className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+            >
+              <option value="">All Team Members</option>
+              {teamMembers.map(member => (
+                <option key={member._id} value={member._id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+          )}
+                      
           {/* Original filters - only for admin role */}
           {userRole === 'admin' && (
             <>
