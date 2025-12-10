@@ -502,6 +502,69 @@ const Dashboard = () => {
     cutout: '50%', // This makes it a donut chart
   };
 
+  // Function to render team member stats in rows of 5
+  const renderTeamMemberStats = () => {
+    if (teamStatsLoading) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          {[1, 2, 3, 4, 5].map((item) => (
+            <div key={item} className="bg-gradient-to-br from-[var(--color-border)] to-[var(--color-border)] p-6 rounded-xl animate-pulse">
+              <div className="h-4 bg-[var(--color-text-light)] rounded w-3/4 mb-2"></div>
+              <div className="h-6 bg-[var(--color-text-light)] rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (teamMemberStats.length === 0) {
+      return (
+        <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
+          <div className="text-center">
+            <Users2 className="mx-auto h-12 w-12 text-[var(--color-text-muted)]" />
+            <h3 className="mt-2 text-sm font-medium text-[var(--color-text-secondary)]">No team members</h3>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">Get started by creating a new team member.</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Group team members into rows of 5
+    const rows = [];
+    const gradients = [
+      'from-blue-500 to-blue-700',
+      'from-purple-500 to-purple-700',
+      'from-green-500 to-green-700',
+      'from-yellow-500 to-yellow-700',
+      'from-pink-500 to-pink-700',
+      'from-indigo-500 to-indigo-700'
+    ];
+
+    for (let i = 0; i < teamMemberStats.length; i += 5) {
+      const rowMembers = teamMemberStats.slice(i, i + 5);
+      rows.push(
+        <div key={i} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+          {rowMembers.map((member, index) => (
+            <div 
+              key={member.memberId} 
+              className={`bg-gradient-to-br ${gradients[index % gradients.length]} p-6 rounded-xl text-white`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm opacity-80 truncate">{member.name}</p>
+                  <p className="text-3xl font-bold mt-1">{member.jobCount}</p>
+                </div>
+                <Users2 className="h-10 w-10 opacity-80" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <div>{rows}</div>;
+  };
+
   return (
     <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
       {loading ? (
@@ -582,53 +645,7 @@ const Dashboard = () => {
           </div>
           
           {/* Team Member Stats Cards - Show for both roles */}
-          {teamStatsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-              {[1, 2, 3, 4, 5].map((item) => (
-                <div key={item} className="bg-gradient-to-br from-[var(--color-border)] to-[var(--color-border)] p-6 rounded-xl animate-pulse">
-                  <div className="h-4 bg-[var(--color-text-light)] rounded w-3/4 mb-2"></div>
-                  <div className="h-6 bg-[var(--color-text-light)] rounded w-1/2"></div>
-                </div>
-              ))}
-            </div>
-          ) : teamMemberStats.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-              {teamMemberStats
-                .slice(0, 5)
-                .map((member, index) => {
-                  const gradients = [
-                    'from-blue-500 to-blue-700',
-                    'from-purple-500 to-purple-700',
-                    'from-green-500 to-green-700',
-                    'from-yellow-500 to-yellow-700',
-                    'from-pink-500 to-pink-700'
-                  ];
-                  
-                  return (
-                    <div 
-                      key={member.memberId} 
-                      className={`bg-gradient-to-br ${gradients[index % gradients.length]} p-6 rounded-xl text-white`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm opacity-80 truncate">{member.name}</p>
-                          <p className="text-3xl font-bold mt-1">{member.jobCount}</p>
-                        </div>
-                        <Users2 className="h-10 w-10 opacity-80" />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          ) : (
-            <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
-              <div className="text-center">
-                <Users2 className="mx-auto h-12 w-12 text-[var(--color-text-muted)]" />
-                <h3 className="mt-2 text-sm font-medium text-[var(--color-text-secondary)]">No team members</h3>
-                <p className="mt-1 text-sm text-[var(--color-text-muted)]">Get started by creating a new team member.</p>
-              </div>
-            </div>
-          )}
+          {renderTeamMemberStats()}
 
           {/* User Statistics Filter - Only show for admin users */}
           {userRole !== 'eliteTeam' && (
@@ -947,7 +964,6 @@ const Dashboard = () => {
             </>
           )}
       
-
         </>
       )}
     </div>
