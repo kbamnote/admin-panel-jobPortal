@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails, getJobsByVerificationStatus, getJobCategories } from '../../utils/Api';
-import SuccessModal from '../../common/modal/SuccessModal';
-import ErrorModal from '../../common/modal/ErrorModal';
-import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
+import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails, getJobCategories } from '../../../utils/Api';
+import SuccessModal from '../../../common/modal/SuccessModal';
+import ErrorModal from '../../../common/modal/ErrorModal';
+import DeleteConfirmationModal from '../../../common/modal/DeleteConfirmationModal';
 import { MapPin, Building, Clock, DollarSign, Calendar, Trash2, Eye, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import Cookies from 'js-cookie';
 
-const Jobs = () => {
+const VerifiedJobs = () => {
   const navigate = useNavigate();
   const userRole = Cookies.get('userRole') || 'admin';
   const [jobs, setJobs] = useState([]);
@@ -24,13 +24,12 @@ const Jobs = () => {
   const [jobCategories, setJobCategories] = useState([]);
   const [filterType, setFilterType] = useState('all'); // 'all', 'admin', 'teamMember'
   const [selectedTeamMember, setSelectedTeamMember] = useState('');
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [verificationStatus, setVerificationStatus] = useState('all'); // 'all', 'verified', 'not verified'
   const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' or specific category
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
   const [limit] = useState(10); // Items per page
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     // Fetch team members for both admin and eliteTeam roles
@@ -64,20 +63,14 @@ const Jobs = () => {
     // Initialize state from URL parameters
     const filterTypeParam = searchParams.get('filterType') || 'all';
     const selectedTeamMemberParam = searchParams.get('selectedTeamMember') || '';
-    const verificationStatusParam = searchParams.get('verificationStatus') || 'all';
     const selectedCategoryParam = searchParams.get('selectedCategory') || 'all';
     const pageParam = parseInt(searchParams.get('page')) || 1;
     
     setFilterType(filterTypeParam);
     setSelectedTeamMember(selectedTeamMemberParam);
-    setVerificationStatus(
-      ['all', 'verified', 'not verified'].includes(verificationStatusParam) 
-        ? verificationStatusParam 
-        : 'all'
-    );
     setSelectedCategory(selectedCategoryParam);
     setCurrentPage(pageParam);
-  }, [searchParams]);
+  }, [userRole, searchParams]);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -94,7 +87,7 @@ const Jobs = () => {
             limit, 
             '', // search
             selectedCategory !== 'all' ? selectedCategory : '', 
-            verificationStatus !== 'all' ? verificationStatus : '',
+            'verified', // Always show verified jobs
             selectedTeamMember || '' // Pass team member ID if selected
           );
         } else {
@@ -107,7 +100,7 @@ const Jobs = () => {
                 limit, 
                 '', // search
                 selectedCategory !== 'all' ? selectedCategory : '', 
-                verificationStatus !== 'all' ? verificationStatus : '',
+                'verified', // Always show verified jobs
                 'admin' // Special parameter to indicate admin posted jobs
               );
               break;
@@ -119,7 +112,7 @@ const Jobs = () => {
                   limit, 
                   '', // search
                   selectedCategory !== 'all' ? selectedCategory : '', 
-                  verificationStatus !== 'all' ? verificationStatus : '',
+                  'verified', // Always show verified jobs
                   selectedTeamMember // Pass team member ID
                 );
               } else {
@@ -129,7 +122,7 @@ const Jobs = () => {
                   limit, 
                   '', // search
                   selectedCategory !== 'all' ? selectedCategory : '', 
-                  verificationStatus !== 'all' ? verificationStatus : ''
+                  'verified' // Always show verified jobs
                 );
               }
               break;
@@ -140,7 +133,7 @@ const Jobs = () => {
                 limit, 
                 '', // search
                 selectedCategory !== 'all' ? selectedCategory : '', 
-                verificationStatus !== 'all' ? verificationStatus : ''
+                'verified' // Always show verified jobs
               );
           }
         }
@@ -162,7 +155,7 @@ const Jobs = () => {
     };
 
     fetchJobs();
-  }, [filterType, selectedTeamMember, userRole, currentPage, limit, verificationStatus, selectedCategory]);
+  }, [filterType, selectedTeamMember, userRole, currentPage, limit, selectedCategory]);
 
   const handleViewDetails = (jobId) => {
     navigate(`/jobs/${jobId}`);
@@ -212,8 +205,6 @@ const Jobs = () => {
     const newParams = {};
     if (params.filterType && params.filterType !== 'all') newParams.filterType = params.filterType;
     if (params.selectedTeamMember) newParams.selectedTeamMember = params.selectedTeamMember;
-    // Always include verificationStatus in URL params
-    if (params.verificationStatus) newParams.verificationStatus = params.verificationStatus;
     if (params.selectedCategory && params.selectedCategory !== 'all') newParams.selectedCategory = params.selectedCategory;
     if (params.page && params.page !== 1) newParams.page = params.page.toString();
     
@@ -241,14 +232,6 @@ const Jobs = () => {
     setCurrentPage(1);
   };
 
-  const handleVerificationStatusChange = (e) => {
-    const newVerificationStatus = e.target.value;
-    setVerificationStatus(newVerificationStatus);
-    updateUrlParams({ verificationStatus: newVerificationStatus, page: 1 });
-    // Reset to first page when verification status changes
-    setCurrentPage(1);
-  };
-  
   const handleCategoryChange = (e) => {
     const newCategory = e.target.value;
     setSelectedCategory(newCategory);
@@ -270,7 +253,7 @@ const Jobs = () => {
         {/* Hide filter dropdown for eliteTeam role */}
         {userRole === 'admin' && (
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Verified Jobs</h2>
             <div className="flex space-x-2">
               <select 
                 value={filterType}
@@ -301,7 +284,7 @@ const Jobs = () => {
         {/* For eliteTeam role, show simple header */}
         {userRole === 'eliteTeam' && (
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Verified Jobs</h2>
           </div>
         )}
         <div className="space-y-6">
@@ -330,7 +313,7 @@ const Jobs = () => {
         {/* Hide filter dropdown for eliteTeam role */}
         {userRole === 'admin' && (
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Verified Jobs</h2>
             <div className="flex space-x-2">
               <select 
                 value={filterType}
@@ -361,7 +344,7 @@ const Jobs = () => {
         {/* For eliteTeam role, show simple header */}
         {userRole === 'eliteTeam' && (
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Job Management</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Verified Jobs</h2>
           </div>
         )}
         <div className="text-[var(--color-error)] text-center py-12 bg-[var(--color-accent-light)] rounded-lg">
@@ -377,22 +360,22 @@ const Jobs = () => {
     if (userRole === 'eliteTeam') {
       if (selectedTeamMember) {
         const member = teamMembers.find(m => m._id === selectedTeamMember);
-        return member ? `${member.name}'s Posted Jobs` : 'Team Member Jobs';
+        return member ? `${member.name}'s Verified Jobs` : 'Team Member Verified Jobs';
       }
-      return 'All Posted Jobs';
+      return 'All Verified Jobs';
     }
     
     switch (filterType) {
       case 'admin':
-        return 'Admin Posted Jobs';
+        return 'Admin Posted Verified Jobs';
       case 'teamMember':
         if (selectedTeamMember) {
           const member = teamMembers.find(m => m._id === selectedTeamMember);
-          return member ? `${member.name}'s Posted Jobs` : 'Team Member Jobs';
+          return member ? `${member.name}'s Verified Jobs` : 'Team Member Verified Jobs';
         }
-        return 'Team Member Jobs';
+        return 'Team Member Verified Jobs';
       default:
-        return 'All Posted Jobs';
+        return 'All Verified Jobs';
     }
   };
 
@@ -416,17 +399,6 @@ const Jobs = () => {
                   {category.category} ({category.count})
                 </option>
               ))}
-          </select>
-                      
-          {/* Verification Status Filter - shown for both roles */}
-          <select 
-            value={verificationStatus}
-            onChange={handleVerificationStatusChange}
-            className="px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
-          >
-            <option value="all">All Jobs</option>
-            <option value="verified">Verified Jobs</option>
-            <option value="not verified">Not Verified Jobs</option>
           </select>
                       
           {/* Team Member Filter - shown for eliteTeam role */}
@@ -475,23 +447,23 @@ const Jobs = () => {
           )}
         </div>
         <div className="text-sm text-[var(--color-text-muted)]">
-          {totalJobs} {totalJobs === 1 ? 'job' : 'jobs'} found
+          {totalJobs} verified {totalJobs === 1 ? 'job' : 'jobs'} found
         </div>
       </div>
       
       {jobs.length === 0 ? (
         <div className="text-center py-16 bg-[var(--color-background-light)] rounded-xl">
           <div className="text-[var(--color-text-light)] text-5xl mb-4">📋</div>
-          <h3 className="text-xl font-semibold text-[var(--color-text-secondary)] mb-2">No jobs found</h3>
+          <h3 className="text-xl font-semibold text-[var(--color-text-secondary)] mb-2">No verified jobs found</h3>
           <p className="text-[var(--color-text-muted)]">
             {userRole === 'admin' ? (
               filterType === 'admin' 
-                ? 'There are currently no jobs posted by admin.' 
+                ? 'There are currently no verified jobs posted by admin.' 
                 : filterType === 'teamMember' 
-                  ? (selectedTeamMember ? 'This team member has not posted any jobs yet.' : 'Please select a team member to view their jobs.')
-                  : 'There are currently no job postings available.'
+                  ? (selectedTeamMember ? 'This team member has not posted any verified jobs yet.' : 'Please select a team member to view their verified jobs.')
+                  : 'There are currently no verified job postings available.'
             ) : (
-              'There are currently no job postings available.'
+              'There are currently no verified job postings available.'
             )}
           </p>
         </div>
@@ -511,15 +483,9 @@ const Jobs = () => {
                       </h3>
                       {/* Display verification status badge */}
                       <div className="flex items-center">
-                        {job.verificationStatus === 'verified' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Verified
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Not Verified
-                          </span>
-                        )}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Verified
+                        </span>
                       </div>
                     </div>
                     
@@ -651,4 +617,4 @@ const Jobs = () => {
   );
 };
 
-export default Jobs;
+export default VerifiedJobs;

@@ -96,6 +96,28 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                             All Jobs
                           </Link>
                           <Link
+                            to="/jobs/verified"
+                            className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                              isActive('/jobs/verified')
+                                ? 'bg-[var(--color-accent)] text-[var(--color-text-white)]'
+                                : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
+                            }`}
+                          >
+                            <Briefcase className="mr-2 h-4 w-4" />
+                            Verified Jobs
+                          </Link>
+                          <Link
+                            to="/jobs/not-verified"
+                            className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                              isActive('/jobs/not-verified')
+                                ? 'bg-[var(--color-accent)] text-[var(--color-text-white)]'
+                                : 'text-[var(--color-text-light)] hover:bg-[var(--color-dark-secondary)] hover:text-[var(--color-text-white)]'
+                            }`}
+                          >
+                            <Briefcase className="mr-2 h-4 w-4" />
+                            Not Verified Jobs
+                          </Link>
+                          <Link
                             to="/jobs/post"
                             className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                               isActive('/jobs/post')

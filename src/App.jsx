@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/pages/auth/Login';
 import Dashboard from './components/pages/dashboard/Dashboard';
 import Jobs from './components/pages/jobs/Jobs';
+import VerifiedJobs from './components/pages/jobs/verified/VerifiedJobs';
+import NotVerifiedJobs from './components/pages/jobs/verified/NotVerifiedJobs';
 import JobDetails from './components/pages/jobs/JobDetails';
 import JobApplicants from './components/pages/jobs/JobApplicants';
 import PostJob from './components/pages/jobs/PostJob';
@@ -124,6 +126,28 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Jobs />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/jobs/verified" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <VerifiedJobs />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/jobs/not-verified" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NotVerifiedJobs />
                 </Layout>
               </ProtectedRoute>
             } 
