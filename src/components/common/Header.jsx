@@ -80,12 +80,19 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   // Function to determine back button destination
   const getBackButtonDestination = () => {
+    // Check if there's a referrer in sessionStorage
+    const referrer = sessionStorage.getItem('referrer');
+    
     if (location.pathname.startsWith('/jobs/') && location.pathname.endsWith('/applicants')) {
       // From job applicants back to job details
       const jobId = location.pathname.split('/')[2];
       return `/jobs/${jobId}`;
     } else if (location.pathname.startsWith('/jobs/') && !location.pathname.endsWith('/applicants')) {
-      // From job details back to jobs list
+      // From job details back to the referrer page if it's a verified/not-verified jobs page
+      if (referrer && (referrer.includes('/jobs/verified') || referrer.includes('/jobs/not-verified'))) {
+        return referrer;
+      }
+      // Default back to jobs list
       return '/jobs';
     } else if (location.pathname.startsWith('/applicants/')) {
       // From applicant details back to applicants list

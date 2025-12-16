@@ -124,3 +124,8 @@ export const getJobVerificationCounts = () => Api.get('/jobs/verification-counts
 
 // ============== Team Member Stats ==============
 export const getTeamMemberStats = () => Api.get('/jobs/team-stats');
+
+// ============== All Companies ==============
+export const getAllCompanies = () => Api.get("/jobs/companies");
+
+export default Api;

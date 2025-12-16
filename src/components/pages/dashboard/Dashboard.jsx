@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { allJobs, allApplicants, getTeamDetails, getAllApplicants, getUserStatistics, getJobCategories, getJobVerificationCounts, getTeamMemberStats } from '../../utils/Api';
+import { allJobs, allApplicants, getTeamDetails, getAllApplicants, getUserStatistics, getJobCategories, getJobVerificationCounts, getTeamMemberStats, getAllCompanies } from '../../utils/Api';
 import { Users, Briefcase, FileText, Users2, Building, Check, X, AlertCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
 import {
@@ -13,9 +13,10 @@ import {
   Tooltip,
   Legend,
   Filler,
-  ArcElement
+  ArcElement,
+  BarElement
 } from 'chart.js';
-import { Line, Doughnut } from 'react-chartjs-2';
+import { Line, Doughnut, Bar } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,
@@ -26,7 +27,8 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  ArcElement
+  ArcElement,
+  BarElement
 );
 
 const Dashboard = () => {
@@ -36,7 +38,8 @@ const Dashboard = () => {
     totalJobs: 0,
     totalApplicants: 0,
     totalTeamMembers: 0,
-    totalUsers: 0
+    totalUsers: 0,
+    totalCompanies: 0
   });
   const [verificationCounts, setVerificationCounts] = useState({
     verified: 0,
@@ -60,15 +63,19 @@ const Dashboard = () => {
   });
   const [jobCategories, setJobCategories] = useState([]);
   const [teamMemberStats, setTeamMemberStats] = useState([]);
+  const [companyStats, setCompanyStats] = useState([]);
+  const [filteredCompanyStats, setFilteredCompanyStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userStatsLoading, setUserStatsLoading] = useState(true);
   const [jobCategoriesLoading, setJobCategoriesLoading] = useState(true);
   const [teamStatsLoading, setTeamStatsLoading] = useState(true);
+  const [companiesLoading, setCompaniesLoading] = useState(true);
   const [error, setError] = useState(null);
   const [recentJobs, setRecentJobs] = useState([]);
   const [recentApplicants, setRecentApplicants] = useState([]);
   const [filterRole, setFilterRole] = useState('all');
   const [filterPeriod, setFilterPeriod] = useState('week');
+  const [companyFilter, setCompanyFilter] = useState('highest');
 
   const handleFilterChange = async (role, period) => {
     setUserStatsLoading(true);
@@ -102,17 +109,19 @@ const Dashboard = () => {
         setTeamStatsLoading(true);
         setUserStatsLoading(true);
         setJobCategoriesLoading(true);
+        setCompaniesLoading(true);
         
         // For eliteTeam users, skip admin-only API calls
         if (userRole === 'eliteTeam') {
           // Fetch only the data that eliteTeam users are allowed to access
-          const [jobsResponse, jobCategoriesResponse, verificationCountsResponse, teamMemberStatsResponse] = await Promise.all([
+          const [jobsResponse, jobCategoriesResponse, verificationCountsResponse, teamMemberStatsResponse, companiesResponse] = await Promise.all([
             allJobs(1, 100), // Get first 100 jobs to count total
             getJobCategories(),
             getJobVerificationCounts(),
-            getTeamMemberStats() // Get team member stats
+            getTeamMemberStats(), // Get team member stats
+            getAllCompanies() // Get company data
           ]);
-
+          console.log('Jobs Response:', jobsResponse.data);
           // Process jobs data
           let totalJobs = 0;
           let jobsData = [];
@@ -150,16 +159,28 @@ const Dashboard = () => {
             teamMemberStatsData = teamMemberStatsResponse.data.data;
           }
 
+          // Process company data
+          let companyStatsData = [];
+          let totalCompanies = 0;
+          
+          if (companiesResponse.data.success) {
+            companyStatsData = companiesResponse.data.data;
+            totalCompanies = companyStatsData.length;
+          }
+
           setStats({
             totalJobs,
             totalApplicants: 0, // Not available for eliteTeam
             totalTeamMembers: 0, // Not available for eliteTeam
-            totalUsers: 0 // Not available for eliteTeam
+            totalUsers: 0, // Not available for eliteTeam
+            totalCompanies
           });
 
           setVerificationCounts(verificationCountsData);
           setJobCategories(jobCategoriesData);
           setTeamMemberStats(teamMemberStatsData);
+          setCompanyStats(companyStatsData);
+          setFilteredCompanyStats(companyStatsData.slice(0, 10)); // Default to top 10
           setRecentJobs(jobsData);
           setRecentApplicants([]); // Not available for eliteTeam
           
@@ -180,7 +201,7 @@ const Dashboard = () => {
           });
         } else {
           // For admin users, fetch all data
-          const [jobsResponse, applicantsResponse, teamResponse, allUsersResponse, userStatsResponse, jobCategoriesResponse, verificationCountsResponse, teamMemberStatsResponse] = await Promise.all([
+          const [jobsResponse, applicantsResponse, teamResponse, allUsersResponse, userStatsResponse, jobCategoriesResponse, verificationCountsResponse, teamMemberStatsResponse, companiesResponse] = await Promise.all([
             allJobs(1, 100), // Get first 100 jobs to count total
             allApplicants(1, 100), // Get first 100 applicants
             getTeamDetails(),
@@ -188,7 +209,8 @@ const Dashboard = () => {
             getUserStatistics({ period: 'week', role: 'all' }),
             getJobCategories(),
             getJobVerificationCounts(),
-            getTeamMemberStats() // Get team member stats
+            getTeamMemberStats(), // Get team member stats
+            getAllCompanies() // Get company data
           ]);
 
           // Process jobs data
@@ -273,16 +295,28 @@ const Dashboard = () => {
             teamMemberStatsData = teamMemberStatsResponse.data.data;
           }
 
+          // Process company data
+          let companyStatsData = [];
+          let totalCompanies = 0;
+          
+          if (companiesResponse.data.success) {
+            companyStatsData = companiesResponse.data.data;
+            totalCompanies = companyStatsData.length;
+          }
+
           setStats({
             totalJobs,
             totalApplicants,
             totalTeamMembers,
-            totalUsers
+            totalUsers,
+            totalCompanies
           });
 
           setVerificationCounts(verificationCountsData);
           setJobCategories(jobCategoriesData);
           setTeamMemberStats(teamMemberStatsData);
+          setCompanyStats(companyStatsData);
+          setFilteredCompanyStats(companyStatsData.slice(0, 10)); // Default to top 10
           setRecentJobs(jobsData);
           setRecentApplicants(applicantsData);
           setUserStats(userStatsData);
@@ -296,11 +330,60 @@ const Dashboard = () => {
         setTeamStatsLoading(false);
         setUserStatsLoading(false);
         setJobCategoriesLoading(false);
+        setCompaniesLoading(false);
       }
     };
 
     fetchDashboardData();
   }, [userRole]);
+
+  useEffect(() => {
+    if (!companyStats || companyStats.length === 0) return;
+
+    let filtered = [];
+    
+    switch (companyFilter) {
+      case 'highest':
+        // Sort by job count descending and take top 10
+        filtered = [...companyStats]
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
+        break;
+      case 'lowest':
+        // Sort by job count ascending and take bottom 10
+        filtered = [...companyStats]
+          .sort((a, b) => a.count - b.count)
+          .slice(0, 10);
+        break;
+      case 'latest':
+        // Sort by creation date descending and take top 10
+        filtered = [...companyStats]
+          .sort((a, b) => {
+            const dateA = a.companyInfo.createdAt ? new Date(a.companyInfo.createdAt) : new Date(0);
+            const dateB = b.companyInfo.createdAt ? new Date(b.companyInfo.createdAt) : new Date(0);
+            return dateB - dateA;
+          })
+          .slice(0, 10);
+        break;
+      case 'oldest':
+        // Sort by creation date ascending and take top 10
+        filtered = [...companyStats]
+          .sort((a, b) => {
+            const dateA = a.companyInfo.createdAt ? new Date(a.companyInfo.createdAt) : new Date(0);
+            const dateB = b.companyInfo.createdAt ? new Date(b.companyInfo.createdAt) : new Date(0);
+            return dateA - dateB;
+          })
+          .slice(0, 10);
+        break;
+      default:
+        // Default to highest
+        filtered = [...companyStats]
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
+    }
+    
+    setFilteredCompanyStats(filtered);
+  }, [companyStats, companyFilter]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -419,6 +502,7 @@ const Dashboard = () => {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
@@ -426,7 +510,10 @@ const Dashboard = () => {
       title: {
         display: true,
         text: 'User Growth Over Time',
-      },
+        font: {
+          size: 16
+        }
+      }
     },
     scales: {
       y: {
@@ -435,10 +522,6 @@ const Dashboard = () => {
           precision: 0
         }
       }
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index',
     }
   };
 
@@ -485,8 +568,49 @@ const Dashboard = () => {
     };
   };
 
+  const prepareCompanyChartData = () => {
+    // This function is used by both admin and eliteTeam users
+    if (!filteredCompanyStats || filteredCompanyStats.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+
+    // Use the already filtered and sorted companies
+    const labels = filteredCompanyStats.map(company => company.companyName);
+    const data = filteredCompanyStats.map(company => company.count);
+    
+    // Define colors for the bar chart
+    const backgroundColors = [
+      'rgba(59, 130, 246, 0.7)', // blue
+      'rgba(16, 185, 129, 0.7)', // green
+      'rgba(139, 92, 246, 0.7)', // purple
+      'rgba(245, 158, 11, 0.7)', // amber
+      'rgba(239, 68, 68, 0.7)', // red
+      'rgba(6, 182, 212, 0.7)', // cyan
+      'rgba(139, 92, 246, 0.7)', // violet
+      'rgba(236, 72, 153, 0.7)', // pink
+      'rgba(249, 115, 22, 0.7)'  // orange
+    ];
+    
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Job Count',
+          data,
+          backgroundColor: backgroundColors.slice(0, labels.length),
+          borderColor: backgroundColors.slice(0, labels.length).map(color => color.replace('0.7', '1')),
+          borderWidth: 1,
+        }
+      ]
+    };
+  };
+
   const doughnutChartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'right',
@@ -498,8 +622,32 @@ const Dashboard = () => {
           size: 16
         }
       }
+    }
+  };
+
+  const companyChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Top Companies by Job Count',
+        font: {
+          size: 16
+        }
+      }
     },
-    cutout: '50%', // This makes it a donut chart
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0
+        }
+      }
+    }
   };
 
   // Function to render team member stats in rows of 5
@@ -600,7 +748,7 @@ const Dashboard = () => {
       ) : (
         <>
           {/* Stats Grid - Show all stats for both roles */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <div className="bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-dark-secondary)] p-6 rounded-xl text-white">
               <div className="flex items-center justify-between">
                 <div>
@@ -642,6 +790,17 @@ const Dashboard = () => {
                 </div>
               </div>
             )}
+            
+            {/* Total Companies Card - Show for both roles */}
+            <div className="bg-gradient-to-br from-[#ec4899] to-[#be185d] p-6 rounded-xl text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm opacity-80">Total Companies</p>
+                  <p className="text-3xl font-bold mt-1">{stats.totalCompanies}</p>
+                </div>
+                <Building className="h-10 w-10 opacity-80" />
+              </div>
+            </div>
           </div>
           
           {/* Team Member Stats Cards - Show for both roles */}
@@ -687,106 +846,154 @@ const Dashboard = () => {
 
           {/* Layout for eliteTeam users: Jobs by Category chart and Recent Jobs side by side */}
           {userRole === 'eliteTeam' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              {/* Jobs by Category Chart - Left side */}
-              <div className="bg-[var(--color-background-light)] rounded-xl p-6">
-                <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">
-                  Jobs by Category
-                </h2>
-                {jobCategoriesLoading ? (
+            <>
+              {/* Charts Section - Top row with pie chart and recent jobs side by side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Jobs by Category Chart - Left side */}
+                <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                    <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-0">
+                      Jobs by Category
+                    </h2>
+                  </div>
+                  {jobCategoriesLoading ? (
+                    <div className="animate-pulse h-80 flex items-center justify-center">
+                      <div className="text-[var(--color-text-muted)]">Loading chart...</div>
+                    </div>
+                  ) : jobCategories.length > 0 ? (
+                    <div className="h-80">
+                      <Doughnut 
+                        key="doughnut-chart-elite"
+                        data={prepareDoughnutChartData()} 
+                        options={doughnutChartOptions} 
+                        className="w-full h-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-80 flex items-center justify-center">
+                      <div className="text-center text-[var(--color-text-muted)]">
+                        <div className="text-4xl mb-2">📊</div>
+                        <p>No job category data available</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Recent Jobs - Right side */}
+                <div className="bg-[var(--color-background-light)] rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
+                      Recent Jobs
+                    </h2>
+                    <button 
+                      onClick={() => navigate('/jobs')}
+                      className="text-sm text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] font-medium"
+                    >
+                      View All
+                    </button>
+                  </div>
+                  
+                  {recentJobs.length > 0 ? (
+                    <div className="space-y-4">
+                      {recentJobs.map((job) => (
+                        <div 
+                          key={job._id} 
+                          className="flex items-center justify-between p-4 bg-[var(--color-white)] rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => navigate(`/jobs/${job._id}`)}
+                        >
+                          <div className="flex items-center">
+                            {job.company?.logo ? (
+                              <img 
+                                src={job.company.logo} 
+                                alt={job.company.name} 
+                                className="w-10 h-10 object-contain rounded-md mr-3 border border-[var(--color-border)]"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-md mr-3 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
+                                <Building className="h-5 w-5 text-[var(--color-text-muted)]" />
+                              </div>
+                            )}
+                            <div>
+                              <h3 className="font-medium text-[var(--color-text-primary)]">
+                                {job.title}
+                              </h3>
+                              <p className="text-[var(--color-text-muted)] text-sm">
+                                {job.company?.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[var(--color-text-muted)] text-sm">
+                              {formatDate(job.createdAt)}
+                            </p>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              job.verificationStatus === 'verified' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {job.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="text-[var(--color-text-light)] text-4xl mb-2">📋</div>
+                      <p className="text-[var(--color-text-muted)]">No recent jobs found</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Full width Company Statistics Chart - Second row */}
+              <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                  <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-0">
+                    Company Job Distribution
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    <select 
+                      value={companyFilter}
+                      onChange={(e) => setCompanyFilter(e.target.value)}
+                      className="px-3 py-1 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] text-sm"
+                    >
+                      <option value="highest">Highest Job Count</option>
+                      <option value="lowest">Lowest Job Count</option>
+                      <option value="latest">Latest Companies</option>
+                      <option value="oldest">Oldest Companies</option>
+                    </select>
+                  </div>
+                </div>
+                {companiesLoading ? (
                   <div className="animate-pulse h-80 flex items-center justify-center">
                     <div className="text-[var(--color-text-muted)]">Loading chart...</div>
                   </div>
-                ) : jobCategories.length > 0 ? (
-                  <div className="h-80">
-                    <Doughnut 
-                      data={prepareDoughnutChartData()} 
-                      options={doughnutChartOptions} 
+                ) : filteredCompanyStats.length > 0 ? (
+                  <div className="h-80 w-full">
+                    <Bar 
+                      key="company-chart-elite"
+                      data={prepareCompanyChartData()} 
+                      options={companyChartOptions} 
                       className="w-full h-full"
                     />
                   </div>
                 ) : (
                   <div className="h-80 flex items-center justify-center">
                     <div className="text-center text-[var(--color-text-muted)]">
-                      <div className="text-4xl mb-2">📊</div>
-                      <p>No job category data available</p>
+                      <div className="text-4xl mb-2">🏢</div>
+                      <p>No company data available</p>
                     </div>
                   </div>
                 )}
               </div>
-              
-              {/* Recent Jobs - Right side */}
-              <div className="bg-[var(--color-background-light)] rounded-xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
-                    Recent Jobs
-                  </h2>
-                  <button 
-                    onClick={() => navigate('/jobs')}
-                    className="text-sm text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] font-medium"
-                  >
-                    View All
-                  </button>
-                </div>
-                
-                {recentJobs.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentJobs.map((job) => (
-                      <div 
-                        key={job._id} 
-                        className="flex items-center justify-between p-4 bg-[var(--color-white)] rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => navigate(`/jobs/${job._id}`)}
-                      >
-                        <div className="flex items-center">
-                          {job.company?.logo ? (
-                            <img 
-                              src={job.company.logo} 
-                              alt={job.company.name} 
-                              className="w-10 h-10 object-contain rounded-md mr-3 border border-[var(--color-border)]"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-md mr-3 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
-                              <Building className="h-5 w-5 text-[var(--color-text-muted)]" />
-                            </div>
-                          )}
-                          <div>
-                            <h3 className="font-medium text-[var(--color-text-primary)]">
-                              {job.title}
-                            </h3>
-                            <p className="text-[var(--color-text-muted)] text-sm">
-                              {job.company?.name}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[var(--color-text-muted)] text-sm">
-                            {formatDate(job.createdAt)}
-                          </p>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            job.verificationStatus === 'verified' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {job.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="text-[var(--color-text-light)] text-4xl mb-2">📋</div>
-                    <p className="text-[var(--color-text-muted)]">No recent jobs found</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            </>
           )}
           
           {/* Layout for admin users: Charts on top, then Recent Jobs and Recent Applicants side by side */}
           {userRole !== 'eliteTeam' && (
             <>
-              {/* Charts Section - Top row */}
+              {/* Charts Section - Top row with line chart and pie chart side by side */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Line Chart - Left side */}
                 <div className="bg-[var(--color-background-light)] rounded-xl p-6">
@@ -800,6 +1007,7 @@ const Dashboard = () => {
                   ) : (
                     <div className="h-80">
                       <Line 
+                        key="line-chart"
                         data={prepareChartData()} 
                         options={chartOptions} 
                         className="w-full h-full"
@@ -820,6 +1028,7 @@ const Dashboard = () => {
                   ) : jobCategories.length > 0 ? (
                     <div className="h-80">
                       <Doughnut 
+                        key="doughnut-chart-admin"
                         data={prepareDoughnutChartData()} 
                         options={doughnutChartOptions} 
                         className="w-full h-full"
@@ -834,6 +1043,48 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
+              </div>
+              
+              {/* Full width Company Statistics Chart - Second row */}
+              <div className="bg-[var(--color-background-light)] rounded-xl p-6 mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                  <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-0">
+                    Company Job Distribution
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    <select 
+                      value={companyFilter}
+                      onChange={(e) => setCompanyFilter(e.target.value)}
+                      className="px-3 py-1 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] text-sm"
+                    >
+                      <option value="highest">Highest Job Count</option>
+                      <option value="lowest">Lowest Job Count</option>
+                      <option value="latest">Latest Companies</option>
+                      <option value="oldest">Oldest Companies</option>
+                    </select>
+                  </div>
+                </div>
+                {companiesLoading ? (
+                  <div className="animate-pulse h-80 flex items-center justify-center">
+                    <div className="text-[var(--color-text-muted)]">Loading chart...</div>
+                  </div>
+                ) : filteredCompanyStats.length > 0 ? (
+                  <div className="h-80 w-full">
+                    <Bar 
+                      key="company-chart-admin"
+                      data={prepareCompanyChartData()} 
+                      options={companyChartOptions} 
+                      className="w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-80 flex items-center justify-center">
+                    <div className="text-center text-[var(--color-text-muted)]">
+                      <div className="text-4xl mb-2">🏢</div>
+                      <p>No company data available</p>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Recent Activity Section - Bottom row */}

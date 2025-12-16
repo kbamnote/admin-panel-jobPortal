@@ -377,7 +377,20 @@ const JobDetails = () => {
             </div>
             <div className="bg-[var(--color-white)] p-3 rounded-lg">
               <div className="text-xs text-[var(--color-text-muted)] mb-1">Direct Link</div>
-              <div className="font-medium">{job.directLink || 'Not specified'}</div>
+              <div className="font-medium break-words overflow-hidden">
+                {job.directLink ? (
+                  <a 
+                    href={job.directLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[var(--color-primary)] hover:underline"
+                  >
+                    {job.directLink}
+                  </a>
+                ) : (
+                  'Not specified'
+                )}
+              </div>
             </div>
           </div>
         </div>

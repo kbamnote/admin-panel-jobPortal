@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { allJobs, deleteJob, jobsByTeamMember, adminPostedJobs, getTeamDetails, getJobCategories } from '../../../utils/Api';
 import SuccessModal from '../../../common/modal/SuccessModal';
 import ErrorModal from '../../../common/modal/ErrorModal';
@@ -9,6 +9,7 @@ import Cookies from 'js-cookie';
 
 const NotVerifiedJobs = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const userRole = Cookies.get('userRole') || 'admin';
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -158,6 +159,8 @@ const NotVerifiedJobs = () => {
   }, [filterType, selectedTeamMember, userRole, currentPage, limit, selectedCategory]);
 
   const handleViewDetails = (jobId) => {
+    // Store the current page as referrer in sessionStorage
+    sessionStorage.setItem('referrer', location.pathname);
     navigate(`/jobs/${jobId}`);
   };
 
