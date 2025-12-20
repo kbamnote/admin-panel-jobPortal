@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Briefcase, Users, UserCircle, LogOut, ChevronDown, Plus, X } from 'lucide-react';
 import Cookies from 'js-cookie';
+import Logo from '../../../assets/ej.png'
 
 const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const location = useLocation();
@@ -49,7 +50,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
         <div className="flex flex-col h-full">
           {/* Sidebar header */}
           <div className="flex items-center justify-between h-16 border-b border-[var(--color-dark-secondary)] px-4">
-            <h1 className="text-xl font-bold text-white text-[var(--color-text-white)]">Job Admin Panel</h1>
+            <img src={Logo} alt="Job Admin Panel" className="h-12 w-auto rounded-2xl p-2" />
+            <span className="text-xl font-bold text-white text-[var(--color-text-white)]">Jobs Admin Panel</span>
             <button 
               className="md:hidden text-[var(--color-text-white)]"
               onClick={() => setIsSidebarOpen(false)}
