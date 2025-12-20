@@ -260,7 +260,14 @@ const Jobs = () => {
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
-      updateUrlParams({ page: newPage });
+      // Preserve all existing filter parameters when changing pages
+      updateUrlParams({ 
+        page: newPage,
+        filterType: filterType,
+        selectedTeamMember: selectedTeamMember,
+        verificationStatus: verificationStatus,
+        selectedCategory: selectedCategory
+      });
     }
   };
 
