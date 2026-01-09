@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { applicantsById } from '../../utils/Api';
-import { 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MapPin, 
-  User, 
-  GraduationCap, 
-  Briefcase, 
-  FileText, 
-  Github, 
-  Linkedin, 
+import {
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  User,
+  GraduationCap,
+  Briefcase,
+  FileText,
+  Github,
+  Linkedin,
   Home,
   ArrowLeft
 } from 'lucide-react';
@@ -58,7 +58,7 @@ const ApplicantsDetails = () => {
 
   const formatExperience = (experience) => {
     if (!experience || experience.length === 0) return 'No experience listed';
-    
+
     return experience.map((exp, index) => (
       <div key={index} className="mb-4 pb-4 border-b border-[var(--color-border)] last:border-0 last:pb-0 last:mb-0">
         <div className="flex justify-between items-start">
@@ -77,7 +77,7 @@ const ApplicantsDetails = () => {
 
   const formatEducation = (education) => {
     if (!education || education.length === 0) return 'No education listed';
-    
+
     return education.map((edu, index) => (
       <div key={index} className="mb-4 pb-4 border-b border-[var(--color-border)] last:border-0 last:pb-0 last:mb-0">
         <h4 className="font-bold text-[var(--color-text-primary)] text-lg">{edu.degree}</h4>
@@ -94,7 +94,7 @@ const ApplicantsDetails = () => {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
         <div className="flex items-center mb-6">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] mr-4"
           >
@@ -143,7 +143,7 @@ const ApplicantsDetails = () => {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
         <div className="flex items-center mb-6">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] mr-4"
           >
@@ -170,7 +170,7 @@ const ApplicantsDetails = () => {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
         <div className="flex items-center mb-6">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] mr-4"
           >
@@ -198,56 +198,77 @@ const ApplicantsDetails = () => {
 
   return (
     <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
-      <div className="flex items-center mb-6">
-        <button 
+      <div className="flex items-center mb-8">
+        <button
           onClick={() => navigate('/applicants')}
-          className="flex items-center text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] mr-4"
+          className="flex items-center text-sm font-medium
+    text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] mr-4"
         >
-          <ArrowLeft className="h-5 w-5 mr-1" />
+          <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Applicants
         </button>
-        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Applicant Details</h1>
+
+        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
+          Applicant Profile
+        </h1>
       </div>
-      
+
+
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-6 mb-6">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-4">{applicant.name}</h1>
-            <div className="flex items-start mb-6">
+        <div className="rounded-2xl border border-[var(--color-border)]
+bg-[var(--color-white)] p-6 shadow-sm mb-10">
+
+          <div className="flex flex-col md:flex-row gap-6">
+
+            {/* Avatar */}
+            <div className="flex-shrink-0">
               {profile.photo ? (
-                <img 
-                  src={profile.photo} 
-                  alt={applicant.name} 
-                  className="w-16 h-16 object-cover rounded-lg mr-4 border border-[var(--color-border)]"
+                <img
+                  src={profile.photo}
+                  alt={applicant.name}
+                  className="w-20 h-20 rounded-xl object-cover border"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-lg mr-4 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
-                  <User className="h-8 w-8 text-[var(--color-text-muted)]" />
+                <div className="w-20 h-20 rounded-xl bg-[var(--color-background-light)]
+        flex items-center justify-center border">
+                  <User className="w-10 h-10 text-[var(--color-text-muted)]" />
                 </div>
               )}
-              <div>
-                <div className="text-xl font-bold text-[var(--color-primary)] mb-1">
-                  {profile.designation || 'No designation specified'}
-                </div>
-                <div className="text-[var(--color-text-secondary)] mb-2">
-                  {profile.highestEducation || 'Education not specified'}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <div className="flex items-center text-[var(--color-text-muted)]">
-                    <Mail className="h-4 w-4 mr-1" />
-                    <span className="text-sm">{applicant.email}</span>
-                  </div>
-                  {profile.phone && (
-                    <div className="flex items-center text-[var(--color-text-muted)]">
-                      <Phone className="h-4 w-4 mr-1" />
-                      <span className="text-sm">{profile.phone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
+
+            {/* Basic Info */}
+            <div className="flex-1 text-left">
+              <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+                {applicant.name}
+              </h2>
+
+              <p className="text-[var(--color-primary)] font-medium">
+                {profile.designation || 'Designation not specified'}
+              </p>
+
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                {profile.highestEducation || 'Education not specified'}
+              </p>
+
+            </div>
+            {/* Contact */}
+            <div className="text-sm">
+              <div className="flex mb-1 items-center text-[var(--color-text-secondary)]">
+                <Mail className="w-4 h-4 mr-1" />
+                {applicant.email}
+              </div>
+
+              {profile.phone && (
+                <div className="flex items-center text-[var(--color-text-secondary)]">
+                  <Phone className="w-4 h-4 mr-1" />
+                  {profile.phone}
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
+
 
         <div className="flex flex-wrap gap-4 mb-6">
           {profile.preferredLocation && (
@@ -270,40 +291,63 @@ const ApplicantsDetails = () => {
           )}
         </div>
 
-        <div className="bg-[var(--color-accent-light)] rounded-xl p-5 mb-8">
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-3">Profile Overview</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-[var(--color-white)] p-3 rounded-lg">
-              <div className="text-xs text-[var(--color-text-muted)] mb-1">Gender</div>
-              <div className="font-medium">{profile.gender || 'Not specified'}</div>
-            </div>
-            <div className="bg-[var(--color-white)] p-3 rounded-lg">
-              <div className="text-xs text-[var(--color-text-muted)] mb-1">Expected Salary</div>
-              <div className="font-medium">{profile.salaryExpectation || 'Not specified'}</div>
-            </div>
-            <div className="bg-[var(--color-white)] p-3 rounded-lg">
-              <div className="text-xs text-[var(--color-text-muted)] mb-1">Preferred Category</div>
-              <div className="font-medium">{profile.preferredCategory || 'Not specified'}</div>
-            </div>
-            <div className="bg-[var(--color-white)] p-3 rounded-lg">
-              <div className="text-xs text-[var(--color-text-muted)] mb-1">Member Since</div>
-              <div className="font-medium">
-                {applicant.createdAt ? formatDate(applicant.createdAt) : 'Not specified'}
+        <div className="mb-10">
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-5">
+            Profile Overview
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+
+            {[
+              { label: 'Gender', value: profile.gender },
+              { label: 'Expected Salary', value: profile.salaryExpectation },
+              { label: 'Preferred Category', value: profile.preferredCategory },
+              { label: 'Member Since', value: formatDate(applicant.createdAt) },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-[var(--color-border)]
+  bg-[var(--color-white)] p-5
+  transition-all duration-300 ease-out
+  hover:-translate-y-1
+  hover:shadow-lg"
+              >
+
+                <p className="text-xs uppercase tracking-wide text-[var(--color-text-muted)] mb-2">
+                  {item.label}
+                </p>
+                <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                  {item.value || 'Not specified'}
+                </p>
               </div>
-            </div>
+            ))}
+
           </div>
         </div>
+
+
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
-          <Home className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
-          Address
-        </h2>
-        <div className="prose max-w-none bg-[var(--color-background-light)] rounded-xl p-5">
-          <p className="text-[var(--color-text-secondary)]">
-            {profile.address || 'No address provided'}
-          </p>
+      <div className="mb-8 grid lg:grid-cols-2 grid-cols-1 gap-8">
+        <div>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
+            <Home className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
+            Address
+          </h2>
+          <div className="prose max-w-none bg-[var(--color-background-light)] rounded-xl p-5">
+            <p className="text-[var(--color-text-secondary)] text-left">
+              {profile.address || 'No address provided'}
+            </p>
+          </div>
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
+            <GraduationCap className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
+            Education
+          </h2>
+          <div className="bg-[var(--color-background-light)] text-left rounded-xl p-5">
+            {formatEducation(profile.education)}
+          </div>
         </div>
       </div>
 
@@ -315,9 +359,9 @@ const ApplicantsDetails = () => {
           </h2>
           <div className="bg-[var(--color-background-light)] rounded-xl p-5">
             {profile.githubUrl ? (
-              <a 
-                href={profile.githubUrl} 
-                target="_blank" 
+              <a
+                href={profile.githubUrl}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-[var(--color-primary)] hover:underline"
               >
@@ -336,9 +380,9 @@ const ApplicantsDetails = () => {
           </h2>
           <div className="bg-[var(--color-background-light)] rounded-xl p-5">
             {profile.linkedinUrl ? (
-              <a 
-                href={profile.linkedinUrl} 
-                target="_blank" 
+              <a
+                href={profile.linkedinUrl}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-[var(--color-primary)] hover:underline"
               >
@@ -351,46 +395,38 @@ const ApplicantsDetails = () => {
         </div>
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
-          <GraduationCap className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
-          Education
-        </h2>
-        <div className="bg-[var(--color-background-light)] rounded-xl p-5">
-          {formatEducation(profile.education)}
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
+            <Briefcase className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
+            Work Experience
+          </h2>
+          <div className="bg-[var(--color-background-light)] text-left rounded-xl p-5">
+            {formatExperience(profile.experience)}
+          </div>
         </div>
-      </div>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
-          <Briefcase className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
-          Work Experience
-        </h2>
-        <div className="bg-[var(--color-background-light)] rounded-xl p-5">
-          {formatExperience(profile.experience)}
-        </div>
-      </div>
-
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
-          <FileText className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
-          Skills
-        </h2>
-        <div className="bg-[var(--color-background-light)] rounded-xl p-5">
-          {profile.skills?.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {profile.skills.map((skill, index) => (
-                <span 
-                  key={index} 
-                  className="bg-[var(--color-accent-light)] text-[var(--color-accent)] px-3 py-1.5 rounded-full text-sm font-medium"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[var(--color-text-muted)]">No skills specified</p>
-          )}
+        <div>
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center">
+            <FileText className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
+            Skills
+          </h2>
+          <div className="bg-[var(--color-background-light)] rounded-xl p-5">
+            {profile.skills?.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {profile.skills.map((skill, index) => (
+                  <span
+                    key={index}
+                    className="bg-[var(--color-accent-light)] text-[var(--color-accent)] px-3 py-1.5 rounded-full text-sm font-medium"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[var(--color-text-muted)]">No skills specified</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -401,10 +437,10 @@ const ApplicantsDetails = () => {
         </h2>
         <div className="bg-[var(--color-background-light)] rounded-xl p-5">
           {applications.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
               {applications.map((application) => (
-                <div 
-                  key={application._id} 
+                <div
+                  key={application._id}
                   className="border border-[var(--color-border)] rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => navigate(`/jobs/${application.jobId?._id}`)}
                 >
@@ -422,9 +458,9 @@ const ApplicantsDetails = () => {
                   </div>
                   {application.resume && (
                     <div className="mt-3">
-                      <a 
-                        href={application.resume} 
-                        target="_blank" 
+                      <a
+                        href={application.resume}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-[var(--color-primary)] hover:underline text-sm flex items-center"
                       >
