@@ -108,7 +108,7 @@ const Applicants = () => {
           {totalApplicants} {totalApplicants === 1 ? 'applicant' : 'applicants'} found
         </div>
       </div>
-      
+
       {applicants.length === 0 ? (
         <div className="text-center py-16 bg-[var(--color-background-light)] rounded-xl">
           <div className="text-[var(--color-text-light)] text-5xl mb-4">👥</div>
@@ -119,94 +119,132 @@ const Applicants = () => {
         </div>
       ) : (
         <>
-          <div className="space-y-6">
-            {applicants.map((applicant) => (
-              <div 
-                key={applicant._id} 
-                className="border border-[var(--color-border)] rounded-xl p-6 bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-all duration-300 hover:border-[var(--color-primary)]"
-              >
-                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                  <div className="flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                      <div className="flex items-center">
+          <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+            <table className="min-w-full border-collapse bg-[var(--color-white)]">
+
+              {/* TABLE HEADER */}
+              <thead className="bg-[var(--color-background-light)]">
+                <tr>
+                  <th className="px-5 py-3 text-left pl-20 text-sm font-semibold text-[var(--color-text-muted)]">
+                    Applicant
+                  </th>
+                  <th className="px-5 py-3 text-center text-sm font-semibold text-[var(--color-text-muted)]">
+                    Email
+                  </th>
+                  <th className="px-5 py-3 text-center pr-10 text-sm font-semibold text-[var(--color-text-muted)]">
+                    Designation
+                  </th>
+                  <th className="px-5 py-3 text-center text-sm font-semibold text-[var(--color-text-muted)]">
+                    Phone
+                  </th>
+                  <th className="px-5 py-3 text-right text-sm font-semibold text-[var(--color-text-muted)]">
+                    Registered On
+                  </th>
+                </tr>
+              </thead>
+
+              {/* TABLE BODY */}
+              <tbody>
+                {applicants.map((applicant, index) => (
+                  <tr
+                    onClick={() => handleViewDetails(applicant._id)}
+                    key={applicant._id}
+                    className={`group cursor-pointer border-t border-[var(--color-border)]
+    transition-all duration-300
+    hover:bg-[var(--color-primary)] hover:shadow-lg
+    ${index % 2 === 0 ? 'bg-[var(--color-white)]' : 'bg-[#f8fafc]'}`}
+                  >
+
+                    {/* Applicant */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
                         {applicant.profile?.photo ? (
-                          <img 
-                            src={applicant.profile.photo} 
-                            alt={applicant.name} 
-                            className="w-12 h-12 object-cover rounded-lg mr-4 border border-[var(--color-border)]"
+                          <img
+                            src={applicant.profile.photo}
+                            alt={applicant.name}
+                            className="w-10 h-10 rounded-lg object-cover border
+    transition-all duration-300
+    group-hover:scale-110
+    group-hover:ring-2
+    group-hover:ring-[var(--color-primary)]"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-lg mr-4 border border-[var(--color-border)] bg-[var(--color-background-light)] flex items-center justify-center">
-                            <User className="h-6 w-6 text-[var(--color-text-muted)]" />
+                          <div
+                            className="w-10 h-10 rounded-lg bg-[var(--color-background-light)]
+    flex items-center justify-center border
+    transition-all duration-300
+    group-hover:scale-110
+    group-hover:bg-[#1e293b]"
+                          >
+                            <User className="w-5 h-5 text-[var(--color-text-muted)] group-hover:text-white" />
                           </div>
                         )}
-                        <h3 className="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] cursor-pointer transition-colors">
-                          {applicant.name}
-                        </h3>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-3 mb-4">
-                      <div className="flex items-center text-[var(--color-text-muted)]">
-                        <Mail className="h-4 w-4 mr-1" />
-                        <span className="text-sm">{applicant.email || 'Email not provided'}</span>
-                      </div>
-                      {applicant.profile?.phone && (
-                        <div className="flex items-center text-[var(--color-text-muted)]">
-                          <Phone className="h-4 w-4 mr-1" />
-                          <span className="text-sm">{applicant.profile.phone}</span>
+
+                        <div>
+                          <p className="font-semibold text-[var(--color-text-primary)] transition group-hover:text-white">
+                            {applicant.name}
+                          </p>
+                          <p className="text-xs text-[var(--color-text-muted)] transition group-hover:text-gray-300">
+                            Job Applicant
+                          </p>
+
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center text-[var(--color-text-muted)] text-sm">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>Registered on {formatDate(applicant.createdAt)}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row md:flex-col md:items-end gap-3">
-                    <button
-                      onClick={() => handleViewDetails(applicant._id)}
-                      className="flex items-center px-4 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                      </div>
+                    </td>
+
+                    {/* Email */}
+                    <td className="px-5 py-4 text-sm text-[var(--color-text-muted)]">
+                      {applicant.email || '-'}
+                    </td>
+
+                    {/* Designation */}
+                    <td className="px-5 py-4 text-center">
+                      {applicant.profile?.designation || '-'}
+                    </td>
+
+                    {/* Phone */}
+                    <td className="px-5 py-4 text-sm text-[var(--color-text-muted)]">
+                      {applicant.profile?.phone || '-'}
+                    </td>
+
+                    {/* Date */}
+                    <td className="px-5 py-4 text-right text-sm text-[var(--color-text-muted)]">
+                      {formatDate(applicant.createdAt)}
+                    </td>
+
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          
+
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-8">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`flex items-center px-4 py-2 rounded-lg ${
-                  currentPage === 1 
-                    ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed' 
-                    : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
-                }`}
+                className={`flex items-center px-4 py-2 rounded-lg ${currentPage === 1
+                  ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed'
+                  : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
+                  }`}
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Previous
               </button>
-              
+
               <div className="text-sm text-[var(--color-text-muted)]">
                 Page {currentPage} of {totalPages}
               </div>
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`flex items-center px-4 py-2 rounded-lg ${
-                  currentPage === totalPages 
-                    ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed' 
-                    : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
-                }`}
+                className={`flex items-center px-4 py-2 rounded-lg ${currentPage === totalPages
+                  ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed'
+                  : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
+                  }`}
               >
                 Next
                 <ChevronRight className="h-4 w-4 ml-2" />
@@ -217,19 +255,19 @@ const Applicants = () => {
       )}
 
       {/* Success Modal */}
-      <SuccessModal 
-        isOpen={isSuccessModalOpen} 
-        onClose={() => setIsSuccessModalOpen(false)} 
-        title="Success" 
-        message={successMessage} 
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="Success"
+        message={successMessage}
       />
 
       {/* Error Modal */}
-      <ErrorModal 
-        isOpen={isErrorModalOpen} 
-        onClose={() => setIsErrorModalOpen(false)} 
-        title="Error" 
-        message={errorMessage} 
+      <ErrorModal
+        isOpen={isErrorModalOpen}
+        onClose={() => setIsErrorModalOpen(false)}
+        title="Error"
+        message={errorMessage}
       />
     </div>
   );
