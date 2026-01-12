@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllApplicants, deleteAccount } from '../../utils/Api';
+import { allApplicants, deleteAccount } from '../../utils/Api';
 import { User, Mail, Calendar, Briefcase, Building, FileText, Trash2 } from 'lucide-react';
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
 import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
 
+
 const AllRoleDetails = () => {
-  const navigate = useNavigate();
   const [applicants, setApplicants] = useState([]);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -19,14 +20,31 @@ const AllRoleDetails = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalApplicants, setTotalApplicants] = useState(0);
+  const [limit] = useState(10);
+
+  // Keep currentPage within available range when totalPages changes
+  useEffect(() => {
+    setCurrentPage((p) => Math.min(p, Math.max(1, totalPages)));
+  }, [totalPages]);
+
 
   useEffect(() => {
     const fetchAllApplicants = async () => {
       try {
         setLoading(true);
-        const response = await getAllApplicants();
-        if (response.data.success) {
-          setApplicants(response.data.data);
+
+        const response = await allApplicants(currentPage, limit);
+
+        if (response.data?.success) {
+          const data = response.data.data || {};
+          const jobSeekers = data.jobSeekers || [];
+          setApplicants(jobSeekers);
+          setTotalPages(data.totalPages || 1);
+          setTotalApplicants(data.totalJobSeekers ?? data.totalItems ?? jobSeekers.length);
+          setCurrentPage((prev) => (data.currentPage && data.currentPage !== prev ? data.currentPage : prev));
         } else {
           setError('Failed to fetch applicants');
         }
@@ -38,7 +56,8 @@ const AllRoleDetails = () => {
     };
 
     fetchAllApplicants();
-  }, []);
+  }, [currentPage, limit]);
+
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Not specified';
@@ -57,7 +76,7 @@ const AllRoleDetails = () => {
       recruiter: 'bg-yellow-100 text-yellow-800',
       jobSeeker: 'bg-indigo-100 text-indigo-800'
     };
-    
+
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${roleStyles[role] || 'bg-gray-100 text-gray-800'}`}>
         {role}
@@ -71,7 +90,7 @@ const AllRoleDetails = () => {
       accepted: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800'
     };
-    
+
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>
         {status}
@@ -86,13 +105,19 @@ const AllRoleDetails = () => {
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
-    
+
     try {
       setIsDeleting(true);
-      const response = await deleteAccount(userToDelete.user._id);
+      const idToDelete = userToDelete?.user?._id || userToDelete?._id;
+      if (!idToDelete) {
+        setErrorMessage('User id not found');
+        setIsErrorModalOpen(true);
+        return;
+      }
+      const response = await deleteAccount(idToDelete);
       if (response.data.success) {
         // Remove the deleted user from the list
-        setApplicants(applicants.filter(applicant => applicant.user._id !== userToDelete.user._id));
+        setApplicants(applicants.filter(applicant => (applicant?.user?._id || applicant?._id) !== idToDelete));
         setIsDeleteModalOpen(false);
         setUserToDelete(null);
         setSuccessMessage('User deleted successfully!');
@@ -149,16 +174,16 @@ const AllRoleDetails = () => {
   }
 
   if (selectedUser) {
-    const user = selectedUser.user;
-    const profile = user.profile || {};
+    const user = selectedUser?.user || selectedUser || {};
+    const profile = user?.profile || {};
     const applications = user.role === 'jobSeeker' ? selectedUser.applications || [] : [];
     const postedJobs = user.role !== 'jobSeeker' ? selectedUser.postedJobs || [] : [];
-    
+
     return (
       <div className="bg-[var(--color-white)] p-4 rounded-xl shadow-lg sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
           <div className="flex items-center">
-            <button 
+            <button
               onClick={() => setSelectedUser(null)}
               className="flex items-center text-[var(--color-primary)] hover:text-[var(--color-dark-secondary)] mr-4"
             >
@@ -175,13 +200,13 @@ const AllRoleDetails = () => {
             Delete User
           </button>
         </div>
-        
+
         <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-dark-secondary)] rounded-xl p-4 mb-6 text-white sm:p-6">
           <div className="flex flex-col md:flex-row md:items-start">
             {profile.photo ? (
-              <img 
-                src={profile.photo} 
-                alt={user.name} 
+              <img
+                src={profile.photo}
+                alt={user.name}
                 className="w-24 h-24 object-cover rounded-full mr-0 mb-4 md:mr-6 md:mb-0 border-4 border-white shadow-lg mx-auto md:mx-0"
               />
             ) : (
@@ -215,7 +240,7 @@ const AllRoleDetails = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             {/* Profile Information */}
@@ -334,7 +359,7 @@ const AllRoleDetails = () => {
                 )}
               </div>
             </div>
-            
+
             {/* Applications (only for jobSeeker) */}
             {user.role === 'jobSeeker' && (
               <div className="bg-[var(--color-background-light)] rounded-xl p-4 sm:p-6">
@@ -342,8 +367,8 @@ const AllRoleDetails = () => {
                 {applications.length > 0 ? (
                   <div className="space-y-4">
                     {applications.map((application) => (
-                      <div 
-                        key={application._id} 
+                      <div
+                        key={application._id}
                         className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)] hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => navigate(`/jobs/${application.jobId?._id}`)}
                       >
@@ -379,9 +404,9 @@ const AllRoleDetails = () => {
                         </div>
                         {application.resume && (
                           <div className="mt-3">
-                            <a 
-                              href={application.resume} 
-                              target="_blank" 
+                            <a
+                              href={application.resume}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-1 bg-[var(--color-primary)] text-[var(--color-text-white)] rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors text-sm"
                             >
@@ -398,7 +423,7 @@ const AllRoleDetails = () => {
                 )}
               </div>
             )}
-            
+
             {/* Posted Jobs (for non-jobSeeker roles) */}
             {user.role !== 'jobSeeker' && (
               <div className="bg-[var(--color-background-light)] rounded-xl p-4 sm:p-6">
@@ -406,18 +431,17 @@ const AllRoleDetails = () => {
                 {postedJobs.length > 0 ? (
                   <div className="space-y-4">
                     {postedJobs.map((job) => (
-                      <div 
-                        key={job._id} 
+                      <div
+                        key={job._id}
                         className="bg-[var(--color-white)] rounded-lg p-4 border border-[var(--color-border)] hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => navigate(`/jobs/${job._id}`)}
                       >
                         <div className="flex justify-between items-start mb-3">
                           <h4 className="font-bold text-[var(--color-text-primary)]">{job.title || 'Unknown Job'}</h4>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            job.isActive 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${job.isActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                            }`}>
                             {job.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </div>
@@ -461,7 +485,7 @@ const AllRoleDetails = () => {
               </div>
             )}
           </div>
-          
+
           <div>
             {/* Skills */}
             {profile.skills && profile.skills.length > 0 && (
@@ -469,8 +493,8 @@ const AllRoleDetails = () => {
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Skills</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.skills.map((skill, index) => (
-                    <span 
-                      key={index} 
+                    <span
+                      key={index}
                       className="bg-[#E94560] bg-opacity-10 text-white px-3 py-1.5 rounded-full text-sm font-medium"
                     >
                       {skill}
@@ -479,16 +503,16 @@ const AllRoleDetails = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Social Links */}
             {(profile.githubUrl || profile.linkedinUrl) && (
               <div className="bg-[var(--color-background-light)] rounded-xl p-4 mb-6 sm:p-6">
                 <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-6">Social Links</h3>
                 <div className="space-y-3">
                   {profile.githubUrl && (
-                    <a 
-                      href={profile.githubUrl} 
-                      target="_blank" 
+                    <a
+                      href={profile.githubUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center p-3 bg-[var(--color-white)] rounded-lg hover:bg-[var(--color-accent-light)] transition-colors"
                     >
@@ -499,9 +523,9 @@ const AllRoleDetails = () => {
                     </a>
                   )}
                   {profile.linkedinUrl && (
-                    <a 
-                      href={profile.linkedinUrl} 
-                      target="_blank" 
+                    <a
+                      href={profile.linkedinUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center p-3 bg-[var(--color-white)] rounded-lg hover:bg-[var(--color-accent-light)] transition-colors"
                     >
@@ -514,7 +538,7 @@ const AllRoleDetails = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Education */}
             {profile.education && profile.education.length > 0 && (
               <div className="bg-[var(--color-background-light)] rounded-xl p-4 mb-6 sm:p-6">
@@ -533,7 +557,7 @@ const AllRoleDetails = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Experience */}
             {profile.experience && profile.experience.length > 0 && (
               <div className="bg-[var(--color-background-light)] rounded-xl p-4 sm:p-6">
@@ -561,7 +585,7 @@ const AllRoleDetails = () => {
   return (
     <div className="bg-[var(--color-white)] p-4 rounded-xl shadow-lg sm:p-6">
       <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6">All Role Details ({applicants.length})</h1>
-      
+
       {applicants.length === 0 ? (
         <div className="text-center py-12 bg-[var(--color-background-light)] rounded-lg">
           <div className="text-[var(--color-text-light)] text-5xl mb-4">👥</div>
@@ -569,98 +593,182 @@ const AllRoleDetails = () => {
           <p className="text-[var(--color-text-muted)]">There are no users in the system yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {applicants.map((applicant) => {
-            const user = applicant.user;
-            const profile = user.profile || {};
-            
-            return (
-              <div 
-                key={user._id} 
-                className="border border-[var(--color-border)] rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer bg-[var(--color-background-light)] hover:bg-[var(--color-white)] relative sm:p-5"
-                onClick={() => setSelectedUser(applicant)}
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteClick(applicant);
-                  }}
-                  className="absolute top-3 right-3 p-1.5 bg-[var(--color-error)] text-[var(--color-text-white)] rounded-full hover:bg-[#dc2626] transition-colors"
+        <div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+
+            {Array.isArray(applicants) && applicants.map((applicant) => {
+              const user = applicant?.user || applicant || {};
+              const profile = user?.profile || {};
+
+              return (
+                <div
+                  key={user._id}
+                  onClick={() => setSelectedUser(applicant)}
+                  className="group relative cursor-pointer rounded-2xl border border-[var(--color-border)]
+             bg-gradient-to-br from-[var(--color-background-light)] to-[var(--color-white)]
+             p-5 shadow-sm transition-all duration-300
+             hover:-translate-y-1 hover:shadow-xl hover:border-[var(--color-primary)]"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-                
-                <div className="flex items-center mb-4">
-                  {profile.photo ? (
-                    <img 
-                      src={profile.photo} 
-                      alt={user.name} 
-                      className="w-12 h-12 object-cover rounded-full mr-4 border-2 border-[var(--color-border)]"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-[var(--color-border)] flex items-center justify-center mr-4 border-2 border-[var(--color-border)]">
-                      <span className="text-lg font-bold text-[var(--color-text-muted)]">
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(applicant);
+                    }}
+                    className="absolute top-4 right-4 z-10 p-2 rounded-full
+               bg-[var(--color-error)]/90 text-[var(--color-text-white)]
+               opacity-0 scale-90 transition-all
+               group-hover:opacity-100 group-hover:scale-100
+               hover:bg-[#dc2626]"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+
+                  {/* Header */}
+                  <div className="flex items-center gap-4 mb-5">
+                    {profile.photo ? (
+                      <img
+                        src={profile.photo}
+                        alt={user.name}
+                        className="h-14 w-14 rounded-full object-cover border-2 border-[var(--color-border)]
+                   shadow-sm group-hover:scale-105 transition-transform"
+                      />
+                    ) : (
+                      <div
+                        className="flex h-14 w-14 items-center justify-center rounded-full
+                   border-2 border-[var(--color-border)]
+                   bg-[var(--color-accent-light)] text-lg font-bold
+                   text-[var(--color-text-secondary)]"
+                      >
                         {user.name?.charAt(0) || 'U'}
-                      </span>
+                      </div>
+                    )}
+
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-semibold text-[var(--color-text-primary)]
+                     group-hover:text-[var(--color-primary)] transition-colors">
+                        {user.name || 'Unknown User'}
+                      </h3>
+                      <p className="truncate text-sm text-[var(--color-text-secondary)]">
+                        {user.email || 'No email'}
+                      </p>
                     </div>
-                  )}
-                  <div>
-                    <h3 className="font-bold text-[var(--color-text-primary)]">{user.name || 'Unknown User'}</h3>
-                    <p className="text-sm text-[var(--color-text-secondary)]">{user.email || 'No email'}</p>
                   </div>
+
+                  <div>
+                    {/* Badges */}
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      {getUserRoleBadge(user.role)}
+                      <span className="rounded-full bg-[var(--color-accent-light)]
+                     px-3 py-1 text-xs font-medium
+                     text-[var(--color-text-secondary)]">
+                        {formatDate(user.createdAt)}
+                      </span>
+                      {/* Footer */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-[var(--color-text-muted)]">
+                          {user.role === 'jobSeeker'
+                            ? `${applicant.applications?.length || 0} applications`
+                            : `${applicant.postedJobs?.length || 0} posted jobs`}
+                        </span>
+
+                        {profile.companyName && (
+                          <span
+                            title={profile.companyName}
+                            className="max-w-[140px] truncate text-xs
+                   text-[var(--color-text-secondary)]"
+                          >
+                            {profile.companyName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {getUserRoleBadge(user.role)}
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-[var(--color-accent-light)] text-[var(--color-text-secondary)]">
-                    {formatDate(user.createdAt)}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-[var(--color-text-muted)]">
-                    {user.role === 'jobSeeker' 
-                      ? `${applicant.applications?.length || 0} applications` 
-                      : `${applicant.postedJobs?.length || 0} posted jobs`}
-                  </span>
-                  {profile.companyName && (
-                    <span className="text-xs text-[var(--color-text-secondary)] truncate max-w-[100px]">
-                      {profile.companyName}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+
+              );
+            })}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+
+              {/* Previous */}
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="rounded-lg border border-[var(--color-border)]
+                 px-4 py-2 text-sm
+                 text-[var(--color-text-secondary)]
+                 disabled:opacity-50 disabled:cursor-not-allowed
+                 hover:bg-[var(--color-accent-light)] transition"
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }).map((_, index) => {
+                const page = index + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`rounded-lg px-4 py-2 text-sm transition
+            ${currentPage === page
+                        ? "bg-[var(--color-primary)] text-[var(--color-text-white)]"
+                        : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-light)]"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+
+              {/* Next */}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="rounded-lg border border-[var(--color-border)]
+                 px-4 py-2 text-sm
+                 text-[var(--color-text-secondary)]
+                 disabled:opacity-50 disabled:cursor-not-allowed
+                 hover:bg-[var(--color-accent-light)] transition"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Success Modal */}
-      <SuccessModal 
-        isOpen={isSuccessModalOpen} 
-        onClose={() => setIsSuccessModalOpen(false)} 
-        title="Success" 
-        message={successMessage} 
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="Success"
+        message={successMessage}
       />
 
       {/* Error Modal */}
-      <ErrorModal 
-        isOpen={isErrorModalOpen} 
-        onClose={() => setIsErrorModalOpen(false)} 
-        title="Error" 
-        message={errorMessage} 
+      <ErrorModal
+        isOpen={isErrorModalOpen}
+        onClose={() => setIsErrorModalOpen(false)}
+        title="Error"
+        message={errorMessage}
       />
 
       {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal 
-        isOpen={isDeleteModalOpen} 
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
         onClose={() => {
           setIsDeleteModalOpen(false);
           setUserToDelete(null);
-        }} 
-        onConfirm={handleDeleteUser} 
-        title="Confirm Deletion" 
-        message={`Are you sure you want to delete user "${userToDelete?.user?.name}"? This action cannot be undone.`} 
+        }}
+        onConfirm={handleDeleteUser}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete user "${userToDelete?.user?.name}"? This action cannot be undone.`}
         isLoading={isDeleting}
       />
     </div>
