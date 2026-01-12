@@ -4,7 +4,8 @@ import Modal from '../../common/modal/Modal';
 import SuccessModal from '../../common/modal/SuccessModal';
 import ErrorModal from '../../common/modal/ErrorModal';
 import DeleteConfirmationModal from '../../common/modal/DeleteConfirmationModal';
-import { Plus, Edit, Trash2, User, Mail, Key } from 'lucide-react';
+import { Plus, Edit, Trash2, User, Mail, Key, Eye, EyeOff } from 'lucide-react';
+
 
 const Team = () => {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -20,6 +21,8 @@ const Team = () => {
   const [memberToDelete, setMemberToDelete] = useState(null);
   const [memberToUpdate, setMemberToUpdate] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const [formData, setFormData] = useState({
     name: '',
@@ -70,7 +73,7 @@ const Team = () => {
       }
 
       const response = await createTeam(formData);
-      
+
       if (response.data.success) {
         setSuccessMessage('Team member created successfully!');
         setIsSuccessModalOpen(true);
@@ -110,7 +113,7 @@ const Team = () => {
       }
 
       const response = await updateTeam(memberToUpdate._id, updateData);
-      
+
       if (response.data.success) {
         setSuccessMessage('Team member updated successfully!');
         setIsSuccessModalOpen(true);
@@ -135,7 +138,7 @@ const Team = () => {
 
     try {
       const response = await deleteTeam(memberToDelete._id);
-      
+
       if (response.data.success) {
         setSuccessMessage('Team member deleted successfully!');
         setIsSuccessModalOpen(true);
@@ -180,7 +183,7 @@ const Team = () => {
             Add Member
           </button>
         </div>
-        
+
         <div className="space-y-4">
           {[1, 2, 3].map((item) => (
             <div key={item} className="border border-[var(--color-border)] rounded-xl p-4 bg-[var(--color-background-light)] animate-pulse">
@@ -217,7 +220,7 @@ const Team = () => {
             Add Member
           </button>
         </div>
-        
+
         <div className="text-[var(--color-error)] text-center py-8 bg-[var(--color-accent-light)] rounded-lg">
           <div className="text-xl font-semibold mb-2">Error Loading Team Members</div>
           <p>{error}</p>
@@ -244,7 +247,7 @@ const Team = () => {
           Add Member
         </button>
       </div>
-      
+
       {teamMembers.length === 0 ? (
         <div className="text-center py-12 bg-[var(--color-background-light)] rounded-lg">
           <div className="text-[var(--color-text-light)] text-5xl mb-4">👥</div>
@@ -258,29 +261,40 @@ const Team = () => {
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {teamMembers.map((member) => (
-            <div key={member._id} className="border border-[var(--color-border)] rounded-xl p-4 bg-[var(--color-background-light)] hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
+            <div
+              key={member._id}
+              className="border border-[var(--color-border)] rounded-xl p-4 bg-[var(--color-background-light)] hover:shadow-md transition-shadow"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
+
+                {/* LEFT : User Info */}
                 <div className="flex items-center">
                   <div className="bg-[var(--color-primary)] rounded-full w-12 h-12 flex items-center justify-center">
                     <User className="h-6 w-6 text-[var(--color-text-white)]" />
                   </div>
+
                   <div className="ml-4">
-                    <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{member.name}</h3>
+                    <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                      {member.name}
+                    </h3>
                     <div className="flex items-center text-[var(--color-text-muted)]">
                       <Mail className="h-4 w-4 mr-1" />
-                      <span className="text-sm">{member.email}</span>
+                      <span className="text-sm break-all">{member.email}</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+
+                {/* RIGHT : Actions */}
+                <div className="flex justify-center gap-2">
                   <button
                     onClick={() => openUpdateModal(member)}
                     className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-background)] rounded-full transition-colors"
                   >
                     <Edit className="h-5 w-5" />
                   </button>
+
                   <button
                     onClick={() => openDeleteModal(member)}
                     className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-error)] hover:bg-[var(--color-background)] rounded-full transition-colors"
@@ -288,10 +302,12 @@ const Team = () => {
                     <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
+
               </div>
             </div>
           ))}
         </div>
+
       )}
 
       {/* Create Team Member Modal */}
@@ -311,7 +327,7 @@ const Team = () => {
               placeholder="Enter full name"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               Email Address *
@@ -326,22 +342,36 @@ const Team = () => {
               placeholder="Enter email address"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               Password *
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              required
-              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              placeholder="Enter password"
-            />
+
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 pr-10 border border-[var(--color-border)] rounded-md shadow-sm
+            focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+            focus:border-[var(--color-primary)] input-field"
+                placeholder="Enter password"
+              />
+
+              {/* Eye toggle button */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
-          
+
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -378,7 +408,7 @@ const Team = () => {
               placeholder="Enter full name"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               Email Address *
@@ -393,21 +423,42 @@ const Team = () => {
               placeholder="Enter email address"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               Password (leave blank to keep current)
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] input-field"
-              placeholder="Enter new password"
-            />
+
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 pr-10 border border-[var(--color-border)] rounded-md shadow-sm
+        focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+        focus:border-[var(--color-primary)] input-field"
+                placeholder="Enter new password"
+              />
+
+              {/* Eye Button */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center
+        text-[var(--color-text-muted)] hover:text-[var(--color-primary)]
+        focus:outline-none"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
-          
+
+
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -428,28 +479,28 @@ const Team = () => {
       </Modal>
 
       {/* Success Modal */}
-      <SuccessModal 
-        isOpen={isSuccessModalOpen} 
-        onClose={() => setIsSuccessModalOpen(false)} 
-        title="Success" 
-        message={successMessage} 
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="Success"
+        message={successMessage}
       />
 
       {/* Error Modal */}
-      <ErrorModal 
-        isOpen={isErrorModalOpen} 
-        onClose={() => setIsErrorModalOpen(false)} 
-        title="Error" 
-        message={errorMessage} 
+      <ErrorModal
+        isOpen={isErrorModalOpen}
+        onClose={() => setIsErrorModalOpen(false)}
+        title="Error"
+        message={errorMessage}
       />
 
       {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal 
-        isOpen={isDeleteModalOpen} 
-        onClose={() => setIsDeleteModalOpen(false)} 
-        onConfirm={handleDeleteConfirm} 
-        title="Confirm Deletion" 
-        message={`Are you sure you want to delete team member "${memberToDelete?.name}"? This action cannot be undone.`} 
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete team member "${memberToDelete?.name}"? This action cannot be undone.`}
         isLoading={false}
       />
     </div>

@@ -47,19 +47,19 @@ export const allJobs = (page = 1, limit = 10, search = '', category = '', verifi
   const params = new URLSearchParams();
   params.append('page', page);
   params.append('limit', limit);
-  
+
   if (search) {
     params.append('search', search);
   }
-  
+
   if (category && category !== 'all') {
     params.append('category', category);
   }
-  
+
   if (verificationStatus && verificationStatus !== 'all') {
     params.append('verificationStatus', verificationStatus);
   }
-  
+
   // Handle postedBy parameter for filtering by admin or team member
   if (postedBy) {
     if (postedBy === 'admin') {
@@ -69,7 +69,7 @@ export const allJobs = (page = 1, limit = 10, search = '', category = '', verifi
       params.append('postedBy', postedBy);
     }
   }
-  
+
   return Api.get(`/jobs?${params.toString()}`);
 };
 
@@ -84,7 +84,7 @@ export const deleteJob = (id) => Api.delete(`/jobs/${id}`);
 
 // ============== Job Applications ==============
 export const getJobApplications = (jobId) => Api.get(`/jobs/${jobId}/applications`);
-export const getAllApplicants = () => Api.get('/admin/applicants');
+export const getAllApplicants = (page = 1, limit = 10) => Api.get(`/admin/applicants?page=${page}&limit=${limit}`);
 
 // ============== Uploading companyLogo ==============
 export const uploadFileHoster = (formData) =>
