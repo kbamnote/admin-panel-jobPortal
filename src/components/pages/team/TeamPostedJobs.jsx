@@ -39,7 +39,7 @@ const TeamPostedJobs = () => {
 
   const fetchJobsByTeamMember = async (teamMemberId, page = 1) => {
     if (!teamMemberId) return;
-    
+
     try {
       setJobsLoading(true);
       setJobsError(null);
@@ -95,13 +95,13 @@ const TeamPostedJobs = () => {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
         <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6">Team Posted Jobs</h2>
-        
+
         <div className="mb-6">
           <div className="animate-pulse">
             <div className="h-10 bg-[var(--color-border)] rounded w-full"></div>
           </div>
         </div>
-        
+
         <div className="space-y-6">
           {[1, 2, 3].map((item) => (
             <div key={item} className="border border-[var(--color-border)] rounded-xl p-6 bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -126,7 +126,7 @@ const TeamPostedJobs = () => {
     return (
       <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
         <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6">Team Posted Jobs</h2>
-        
+
         <div className="mb-6">
           <select
             value={selectedTeamMember}
@@ -137,7 +137,7 @@ const TeamPostedJobs = () => {
             <option value="">Select a team member</option>
           </select>
         </div>
-        
+
         <div className="text-[var(--color-error)] text-center py-12 bg-[var(--color-accent-light)] rounded-lg">
           <div className="text-xl font-semibold mb-2">Error Loading Team Members</div>
           <p>{error}</p>
@@ -155,7 +155,7 @@ const TeamPostedJobs = () => {
   return (
     <div className="bg-[var(--color-white)] p-6 rounded-xl shadow-lg">
       <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6">Team Posted Jobs</h2>
-      
+
       <div className="mb-6">
         <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
           Select Team Member
@@ -173,7 +173,7 @@ const TeamPostedJobs = () => {
           ))}
         </select>
       </div>
-      
+
       {jobsLoading ? (
         <div className="space-y-6">
           {[1, 2, 3].map((item) => (
@@ -210,25 +210,25 @@ const TeamPostedJobs = () => {
         </div>
       ) : (
         <>
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {jobs.map((job) => (
-              <div 
-                key={job._id} 
-                className="border border-[var(--color-border)] rounded-xl p-6 bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-all duration-300 hover:border-[var(--color-primary)]"
+              <div
+                key={job._id}
+                className="border drop-shadow-md border-[var(--color-border)] rounded-xl bg-gradient-to-br from-[var(--color-white)] to-[var(--color-background-light)] shadow-sm hover:shadow-md transition-all duration-300 hover:border-[var(--color-primary)]"
               >
-                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                  <div className="flex-1">
+                <div className="relative  h-full group">
+                  <div className="flex-1 p-6">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
                       <h3 className="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] cursor-pointer transition-colors">
                         {job.title}
                       </h3>
                     </div>
-                    
+
                     <div className="flex items-center text-[var(--color-text-secondary)] mb-4">
                       <Building className="h-4 w-4 mr-2" />
                       <span className="font-medium text-[var(--color-primary)]">{job.company?.name}</span>
                     </div>
-                    
+
                     <div className="flex flex-wrap gap-3 mb-4">
                       <div className="flex items-center text-[var(--color-text-muted)]">
                         <MapPin className="h-4 w-4 mr-1" />
@@ -237,8 +237,8 @@ const TeamPostedJobs = () => {
                       <div className="flex items-center text-[var(--color-text-muted)]">
                         <DollarSign className="h-4 w-4 mr-1" />
                         <span className="text-sm">
-                          {job.salary?.min ? 
-                            `${(job.salary.min/100000).toFixed(1)}-${(job.salary.max/100000).toFixed(1)}L ${job.salary.currency}` : 
+                          {job.salary?.min ?
+                            `${(job.salary.min / 100000).toFixed(1)}-${(job.salary.max / 100000).toFixed(1)}L ${job.salary.currency}` :
                             'Not disclosed'}
                         </span>
                       </div>
@@ -247,19 +247,22 @@ const TeamPostedJobs = () => {
                         <span className="text-sm">{job.jobType}</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center text-[var(--color-text-muted)] text-sm">
                       <Calendar className="h-4 w-4 mr-1" />
                       <span>Posted on {formatDate(job.createdAt)}</span>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col sm:flex-row md:flex-col md:items-end gap-3">
+
+                  <div onClick={() => handleViewDetails(job._id)} className="absolute left-0 right-0 top-0 bottom-0 group-hover:bg-[color:var(--color-primary-opacity)] transition-colors duration-500 rounded-lg item-center content-center">
                     <button
-                      onClick={() => handleViewDetails(job._id)}
-                      className="flex items-center px-4 py-2 bg-[var(--color-primary)] text-[var(--color-text-white)] text-sm font-medium rounded-lg hover:bg-[var(--color-dark-secondary)] transition-colors shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
+                      className="flex justify-self-center items-center group-hover:opacity-100 opacity-0 px-4 py-2 
+                    text-[var(--color-text-white)] text-lg font-bold
+                    transition-all duration-300
+                    hover:drop-shadow-md hover:drop-shadow-xl
+                    "
                     >
-                      <Eye className="h-4 w-4 mr-2" />
+                      <Eye className="h-6 w-6 mr-2" />
                       View Details
                     </button>
                   </div>
@@ -267,35 +270,33 @@ const TeamPostedJobs = () => {
               </div>
             ))}
           </div>
-          
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-8">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`flex items-center px-4 py-2 rounded-lg ${
-                  currentPage === 1 
-                    ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed' 
-                    : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
-                }`}
+                className={`flex items-center px-4 py-2 rounded-lg ${currentPage === 1
+                  ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed'
+                  : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
+                  }`}
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Previous
               </button>
-              
+
               <div className="text-sm text-[var(--color-text-muted)]">
                 Page {currentPage} of {totalPages} ({totalJobs} total jobs)
               </div>
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`flex items-center px-4 py-2 rounded-lg ${
-                  currentPage === totalPages 
-                    ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed' 
-                    : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
-                }`}
+                className={`flex items-center px-4 py-2 rounded-lg ${currentPage === totalPages
+                  ? 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed'
+                  : 'bg-[var(--color-primary)] text-[var(--color-text-white)] hover:bg-[var(--color-dark-secondary)]'
+                  }`}
               >
                 Next
                 <ChevronRight className="h-4 w-4 ml-2" />
