@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const BASE_URL = "https://elitejobsbackend-production.up.railway.app";
+const BASE_URL = "https://api.eliteindiajobs.in";
 
 const Api = axios.create({
   baseURL: BASE_URL,
