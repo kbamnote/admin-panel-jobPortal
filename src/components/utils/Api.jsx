@@ -128,4 +128,29 @@ export const getTeamMemberStats = () => Api.get('/jobs/team-stats');
 // ============== All Companies ==============
 export const getAllCompanies = () => Api.get("/jobs/companies");
 
+// ============== Contact Management ==============
+export const getAllContacts = (page = 1, limit = 10, status = "", search = "") => {
+  const params = new URLSearchParams();
+  params.append("page", page);
+  params.append("limit", limit);
+  
+  if (status) {
+    params.append("status", status);
+  }
+  
+  if (search) {
+    params.append("search", search);
+  }
+  
+  return Api.get(`/contact?${params.toString()}`);
+};
+
+export const getContactById = (id) => Api.get(`/contact/${id}`);
+
+export const updateContact = (id, data) => Api.put(`/contact/${id}`, data);
+
+export const deleteContact = (id) => Api.delete(`/contact/${id}`);
+
+export const getContactStats = () => Api.get("/contact/stats");
+
 export default Api;

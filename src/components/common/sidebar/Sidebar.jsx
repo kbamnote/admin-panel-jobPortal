@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, UserCircle, LogOut, ChevronDown, Plus, X } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, UserCircle, LogOut, ChevronDown, Plus, X, MessageSquare } from 'lucide-react';
 import Cookies from 'js-cookie';
 import Logo from '../../../assets/ej.png'
 
@@ -20,7 +20,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     ...(userRole === 'admin' ? [
       { name: 'Applicants', href: '/applicants', icon: Users },
       { name: 'All Role Details', href: '/all-role-details', icon: UserCircle },
-      { name: 'Team', href: '/team', icon: UserCircle, hasDropdown: true }
+      { name: 'Team', href: '/team', icon: UserCircle, hasDropdown: true },
+      { name: 'Contact Forms', href: '/contacts', icon: MessageSquare }
     ] : [])
   ];
 

@@ -27,6 +27,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         return 'Team Posted Jobs';
       case '/all-role-details':
         return 'User Role Details';
+      case '/contacts':
+        return 'Contact Management';
       default:
         // Handle dynamic routes
         if (location.pathname.startsWith('/jobs/') && location.pathname.endsWith('/applicants')) {
@@ -37,6 +39,9 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         }
         if (location.pathname.startsWith('/applicants/')) {
           return 'Applicant Details';
+        }
+        if (location.pathname.startsWith('/contacts/')) {
+          return 'Contact Details';
         }
         
         // Handle other potential routes with a more generic approach
@@ -75,7 +80,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
     // Show back button for detail pages and nested routes
     return location.pathname.includes('/jobs/') || 
            location.pathname.includes('/applicants/') ||
-           location.pathname.includes('/team/');
+           location.pathname.includes('/team/') ||
+           location.pathname.includes('/contacts/');
   };
 
   // Function to determine back button destination
@@ -100,6 +106,9 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
     } else if (location.pathname.startsWith('/team/posted-jobs')) {
       // From team posted jobs back to team
       return '/team';
+    } else if (location.pathname.startsWith('/contacts/')) {
+      // From contact details back to contacts list
+      return '/contacts';
     }
     // Default back to dashboard
     return '/dashboard';

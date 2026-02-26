@@ -13,6 +13,8 @@ import ApplicantsDetails from './components/pages/applicants/ApplicantsDetails';
 import AllRoleDetails from './components/pages/applicants/AllRoleDetails';
 import Team from './components/pages/team/Team';
 import TeamPostedJobs from './components/pages/team/TeamPostedJobs';
+import Contacts from './components/pages/contacts/Contacts';
+import ContactDetails from './components/pages/contacts/ContactDetails';
 import Layout from './components/common/Layout';
 import './App.css';
 import Cookies from 'js-cookie';
@@ -203,6 +205,28 @@ function App() {
               <ProtectedRoute allowedRoles={['admin']}>
                 <Layout>
                   <Team />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/contacts" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Layout>
+                  <Contacts />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/contacts/:id" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Layout>
+                  <ContactDetails />
                 </Layout>
               </ProtectedRoute>
             } 
