@@ -15,6 +15,7 @@ import Team from './components/pages/team/Team';
 import TeamPostedJobs from './components/pages/team/TeamPostedJobs';
 import Contacts from './components/pages/contacts/Contacts';
 import ContactDetails from './components/pages/contacts/ContactDetails';
+import ImportData from './components/pages/import/ImportData';
 import Layout from './components/common/Layout';
 import './App.css';
 import Cookies from 'js-cookie';
@@ -227,6 +228,17 @@ function App() {
               <ProtectedRoute allowedRoles={['admin']}>
                 <Layout>
                   <ContactDetails />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/import-data" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Layout>
+                  <ImportData />
                 </Layout>
               </ProtectedRoute>
             } 

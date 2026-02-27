@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const BASE_URL = "https://api.eliteindiajobs.com";
+const BASE_URL = "https://api.eliteindiajobs.com" || "https://api.eliteindiajobs.in";
 
 const Api = axios.create({
   baseURL: BASE_URL,
@@ -152,5 +152,23 @@ export const updateContact = (id, data) => Api.put(`/contact/${id}`, data);
 export const deleteContact = (id) => Api.delete(`/contact/${id}`);
 
 export const getContactStats = () => Api.get("/contact/stats");
+
+// ============== Import Data ==============
+export const importJobSeekers = (formData) =>
+  Api.post("/import/jobseekers", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getImportedJobSeekers = (page = 1, limit = 10, search = '') => {
+  const params = new URLSearchParams();
+  params.append('page', page);
+  params.append('limit', limit);
+  if (search) params.append('search', search);
+  return Api.get(`/import/jobseekers?${params.toString()}`);
+};
+
+export const sendWelcomeEmails = (data) => Api.post("/import/jobseekers/welcome-emails", data);
+
+export const getImportStatistics = () => Api.get("/import/statistics");
 
 export default Api;
